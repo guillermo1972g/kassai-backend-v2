@@ -71,7 +71,16 @@ Always respond ONLY in valid JSON: {"marketAnalysis":"","opportunity":false,"rec
     });
   }
 });
+const alpaca = require('./services/alpacaClient');
 
+app.get('/api/alpaca/account', async (req, res) => {
+  try {
+    const account = await alpaca.getAccount();
+    res.json(account);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`KASS.AI Backend running on port ${PORT}`);
