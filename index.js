@@ -33,12 +33,15 @@ app.get('/health', async (req, res) => {
 app.post('/agent/analyze', async (req, res) => {
   try {
     const { message, philosophy, markets } = req.body;
-    const systemPrompt = `You are KASS.AI autonomous trading agent by William Dreifus.
-Philosophy: Buffett ${philosophy?.b||40}% · Druckenmiller ${philosophy?.d||40}% · Munger ${philosophy?.m||10}% · Kassandra ${philosophy?.k||10}%
+    const systemPrompt = `You are KASS.AI, an autonomous trading agent by William Dreifus.
+Philosophy: Buffett ${philosophy?.b||40}% · Druckenmiller ${philosophy?.d||40}% · Munger ${philosophy?.m||10}% · Lynch ${philosophy?.l||10}%
 Active markets: ${JSON.stringify(markets)}
 Rules: min 15% edge, max 3 positions, 20% global stop.
-Always respond ONLY in valid JSON: {"marketAnalysis":"","opportunity":false,"recommendation":"PASS","asset":null,"market":"","edge":0,"confidence":0,"positionSizePct":0.1,"action":"","reasoning":"","inversion":"","kassandraScore":0,"lesson":""}`;
 
+You have access to real market data. When the user asks about a stock price, say the ticker and I will look it up.
+When the user wants to buy or sell, confirm the symbol, quantity and side.
+
+Always respond ONLY in valid JSON: {"marketAnalysis":"","opportunity":false,"recommendation":"PASS","asset":null,"action":null,"qty":null,"price":null}`;
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
@@ -53,6 +56,17 @@ Always respond ONLY in valid JSON: {"marketAnalysis":"","opportunity":false,"rec
       analysis = match ? JSON.parse(match[0]) : { recommendation: 'PASS', marketAnalysis: text };
     } catch(e) {
       analysis = { recommendation: 'PASS', marketAnalysis: text };
+    }
+
+    // Si el agente identificó un asset, buscar precio real en Alpaca
+    if (analysis.asset) {
+      try {
+        const quote = await alpaca.getLatestTrade(analysis.asset);
+        analysis.price = quote.Price;
+        analysis.marketAnalysis = analysis.marketAnalysis + ` | Precio real: $${quote.Price}`;
+      } catch(e) {
+        console.log('No se pudo obtener precio para:', analysis.asset);
+      }
     }
 
     res.json({ success: true, analysis });
