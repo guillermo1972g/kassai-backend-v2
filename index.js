@@ -33,15 +33,26 @@ app.get('/health', async (req, res) => {
 app.post('/agent/analyze', async (req, res) => {
   try {
     const { message, philosophy, markets } = req.body;
+
+    const philosophers = philosophy && Object.keys(philosophy).length > 0
+      ? Object.entries(philosophy).map(([name, pct]) => `${name} ${pct}%`).join(' · ')
+      : 'Sin filosofía — análisis técnico puro';
+
     const systemPrompt = `You are KASS.AI, an autonomous trading agent by William Dreifus.
-Philosophy: Buffett ${philosophy?.b||40}% · Druckenmiller ${philosophy?.d||40}% · Munger ${philosophy?.m||10}% · Lynch ${philosophy?.l||10}%
-Active markets: ${JSON.stringify(markets)}
+Philosophy mix: ${philosophers}
+Active markets: ${JSON.stringify(markets || [])}
 Rules: min 15% edge, max 3 positions, 20% global stop.
 
-You have access to real market data. When the user asks about a stock price, say the ticker and I will look it up.
-When the user wants to buy or sell, confirm the symbol, quantity and side.
+When analyzing, always explain your reasoning step by step:
+1. What you see in the market
+2. Why this represents an opportunity or risk
+3. What the philosophy mix says about it
+4. Your confidence level (HIGH/MEDIUM/LOW)
 
-Always respond ONLY in valid JSON: {"marketAnalysis":"","opportunity":false,"recommendation":"PASS","asset":null,"action":null,"qty":null,"price":null}`;
+For each opportunity found, provide: asset ticker, entry price, target price, stop loss, reasoning.
+
+Always respond ONLY in valid JSON:
+{"marketAnalysis":"","opportunity":false,"recommendation":"PASS","asset":null,"action":null,"qty":null,"price":null,"target":null,"stopLoss":null,"confidence":"LOW","reasoning":""}`;
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
@@ -142,6 +153,47 @@ app.get('/api/alpaca/quote/:symbol', async (req, res) => {
       res.status(500).json({ error: error.message });
     }
   });
+  // 5 ideas diarias automáticas
+app.get('/api/agent/daily-ideas', async (req, res) => {
+  try {
+    const tickers = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'SPY', 'AMD', 'NFLX'];
+    const prices = {};
+    for (const t of tickers) {
+      try {
+        const q = await alpaca.getLatestTrade(t);
+        prices[t] = q.Price;
+      } catch(e) {}
+    }
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      system: `You are KASS.AI, an elite autonomous trading agent. Analyze the market and generate exactly 5 high-probability trade ideas for today. For each idea explain the reasoning clearly. Always respond ONLY in valid JSON array:
+[{"asset":"TICKER","recommendation":"BUY/SELL","confidence":"HIGH/MEDIUM/LOW","marketAnalysis":"why this trade","reasoning":"step by step logic","price":0,"target":0,"stopLoss":0}]`,
+      messages: [{ role: 'user', content: `Current prices: ${JSON.stringify(prices)}. Generate 5 trade ideas for today.` }]
+    });
+
+    const text = response.content[0].text;
+    let ideas;
+    try {
+      const match = text.match(/\[[\s\S]*\]/);
+      ideas = match ? JSON.parse(match[0]) : [];
+    } catch(e) {
+      ideas = [];
+    }
+
+    // Enrich with real prices
+    for (const idea of ideas) {
+      if (idea.asset && prices[idea.asset]) {
+        idea.price = prices[idea.asset];
+      }
+    }
+
+    res.json({ success: true, ideas });
+  } catch(error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`KASS.AI Backend running on port ${PORT}`);
