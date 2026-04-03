@@ -81,6 +81,53 @@ app.get('/api/alpaca/account', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// Precio en tiempo real
+app.get('/api/alpaca/quote/:symbol', async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      const quote = await alpaca.getLatestTrade(symbol);
+      res.json(quote);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Ejecutar orden simulada
+  app.post('/api/alpaca/order', async (req, res) => {
+    try {
+      const { symbol, qty, side, type, time_in_force } = req.body;
+      const order = await alpaca.createOrder({
+        symbol,
+        qty,
+        side,
+        type: type || 'market',
+        time_in_force: time_in_force || 'day'
+      });
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Ver posiciones abiertas
+  app.get('/api/alpaca/positions', async (req, res) => {
+    try {
+      const positions = await alpaca.getPositions();
+      res.json(positions);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Historial de órdenes
+  app.get('/api/alpaca/history', async (req, res) => {
+    try {
+      const orders = await alpaca.getOrders({ status: 'all', limit: 50 });
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`KASS.AI Backend running on port ${PORT}`);
