@@ -65,5 +65,10 @@ app.listen(PORT, () => {
     console.log('KASS.AI Backend v2 on port ' + PORT);
     console.log('Anthropic: ' + (process.env.ANTHROPIC_API_KEY ? 'OK' : 'MISSING'));
     console.log('Alpaca: ' + (process.env.ALPACA_API_KEY ? 'OK' : 'MISSING'));
-    console.log('Agent: READY - POST /agent/start to activate');
+    console.log('Agent: READY - POST /agent/start to activate');console.log('Agent: AUTO-STARTING...');
+  setTimeout(() => {
+    const result = startAgent(alpaca);
+    console.log('Agent auto-start:', result.message);
+  }, 3000);
+    
 });
