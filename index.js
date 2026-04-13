@@ -11,7 +11,7 @@ app.use(express.json());
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const alpaca = require('./services/alpacaClient');
-const { startAgent, stopAgent, getAgentStatus } = require('./services/agentLoop');
+const { startAgent, stopAgent, getAgentStatus, setCapital, setTakeProfit } = require('./services/agentLoop');
 const { startNotifier, stopNotifier, sendWhatsApp, sendTradeAlert } = require('./services/notifier');
 
 app.get('/', (req, res) => res.json({ status: 'OK', message: 'KASS.AI Backend v2', agent: getAgentStatus().status }));
@@ -21,10 +21,46 @@ app.get('/health', async (req, res) => {
   res.json({ status: error ? 'ERROR' : 'OK', supabase: error ? error.message : 'Connected', anthropic: process.env.ANTHROPIC_API_KEY ? 'OK' : 'MISSING', alpaca: process.env.ALPACA_API_KEY ? 'OK' : 'MISSING', twilio: process.env.TWILIO_ACCOUNT_SID ? 'OK' : 'MISSING', agent: getAgentStatus().status });
 });
 
+// Agent control
 app.post('/agent/start', (req, res) => res.json(startAgent(alpaca)));
 app.post('/agent/stop', (req, res) => res.json(stopAgent()));
 app.get('/agent/status', (req, res) => res.json(getAgentStatus()));
 
+// Capital management
+app.post('/capital/set', async (req, res) => {
+  const { amount } = req.body;
+  if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
+  setCapital(amount);
+  const msg = '💰 *Capital actualizado*\n\nEl agente operará con: *$' + parseFloat(amount).toLocaleString() + '*\nStop loss global: 20%\n\n_KASS.AI Trading System_';
+  await sendWhatsApp(msg);
+  res.json({ success: true, capital: amount, message: 'Capital set to $' + amount });
+});
+
+app.post('/capital/withdraw', async (req, res) => {
+  try {
+    const positions = await alpaca.getPositions();
+    let liquidated = 0;
+    for (const pos of positions) {
+      try { await alpaca.closePosition(pos.symbol); liquidated++; } catch(e) {}
+    }
+    const account = await alpaca.getAccount();
+    const cash = parseFloat(account.cash);
+    const msg = '💸 *Retiro ejecutado*\n\n' + liquidated + ' posiciones liquidadas\nCash disponible: *$' + cash.toFixed(2) + '*\n\nFondos disponibles en tu cuenta Alpaca.\n\n_KASS.AI Trading System_';
+    await sendWhatsApp(msg);
+    res.json({ success: true, liquidated, cash, message: 'All positions closed' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/capital/takeprofit', async (req, res) => {
+  const { target } = req.body;
+  if (!target || target <= 0) return res.status(400).json({ error: 'Invalid target' });
+  setTakeProfit(target);
+  const msg = '🎯 *Take Profit configurado*\n\nEl agente liquidará automáticamente cuando el portfolio llegue a: *$' + parseFloat(target).toLocaleString() + '*\n\n_KASS.AI Trading System_';
+  await sendWhatsApp(msg);
+  res.json({ success: true, target, message: 'Take profit set at $' + target });
+});
+
+// WhatsApp test
 app.post('/notify/test', async (req, res) => {
   const ok = await sendWhatsApp('🤖 *KASS.AI conectado!*\n\nSistema de alertas funcionando correctamente.\nRecibirás informes a las 8am y 8pm hora Paraguay.\n\n_KASS.AI Trading System_');
   res.json({ success: ok });
@@ -74,6 +110,6 @@ app.listen(PORT, () => {
     const result = startAgent(alpaca);
     console.log('Agent auto-start:', result.message);
     startNotifier(alpaca, {});
-    console.log('Notifier started - reports at 8am and 8pm PY time');
+    console.log('Notifier started');
   }, 3000);
 });
