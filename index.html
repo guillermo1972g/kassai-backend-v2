@@ -903,6 +903,9 @@ async function loadPerformance() {
 // ─── News ─────────────────────────────────────────────────────────────────────
 async function loadNews() {
   try {
+    // Wake backend first if needed
+    await fetch(`${API}/health`).catch(()=>{});
+    await new Promise(r => setTimeout(r, 1000));
     const res = await fetch(`${API}/news`);
     const data = await res.json();
     if (!data.success) return;
@@ -931,6 +934,13 @@ async function loadNews() {
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
+// Keep Render backend alive (free tier sleeps after 15min)
+async function pingBackend() {
+  try { await fetch(`${API}/health`); } catch(e) {}
+}
+pingBackend();
+setInterval(pingBackend, 14 * 60 * 1000); // every 14 min
+
 pollStatus();
 setInterval(pollStatus, 10000);
 loadPublicMarkets();
