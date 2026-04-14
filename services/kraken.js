@@ -106,7 +106,7 @@ async function getTickers(pairs = DEFAULT_PAIRS) {
   const pairStr = pairs.join(',');
   const result = await httpGet(`/0/public/Ticker?pair=${pairStr}`);
   return Object.entries(result).map(([pair, t]) => ({
-    pair,
+    pair: pair.replace('XXBT', 'XBT').replace('XETH', 'ETH').replace('ZUSD','USD'),
     ask: parseFloat(t.a[0]),
     bid: parseFloat(t.b[0]),
     last: parseFloat(t.c[0]),

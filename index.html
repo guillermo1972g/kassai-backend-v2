@@ -685,19 +685,20 @@ async function loadPublicMarkets() {
     const data = await res.json();
     // Update crypto ticker
     if (data.crypto && data.crypto.length) {
-      const btc = data.crypto.find(c => c.pair === 'XBTUSD');
-      const eth = data.crypto.find(c => c.pair === 'ETHUSD');
-      const sol = data.crypto.find(c => c.pair === 'SOLUSD');
-      if (btc) { document.getElementById('t-btc').textContent = '$' + btc.last.toLocaleString(); document.getElementById('t-btc').className = 'ticker-price up'; }
-      if (eth) { document.getElementById('t-eth').textContent = '$' + eth.last.toLocaleString(); document.getElementById('t-eth').className = 'ticker-price up'; }
-      if (sol) { document.getElementById('t-sol').textContent = '$' + sol.last.toFixed(2); document.getElementById('t-sol').className = 'ticker-price up'; }
+      const btc = data.crypto.find(c => c.pair.includes('XBT') || c.pair.includes('BTC'));
+      const eth = data.crypto.find(c => c.pair.includes('ETH'));
+      const sol = data.crypto.find(c => c.pair.includes('SOL'));
+      const ada = data.crypto.find(c => c.pair.includes('ADA'));
+      if (btc) { document.getElementById('t-btc').textContent = '$' + Number(btc.last).toLocaleString(); document.getElementById('t-btc').className = 'ticker-price up'; }
+      if (eth) { document.getElementById('t-eth').textContent = '$' + Number(eth.last).toLocaleString(); document.getElementById('t-eth').className = 'ticker-price up'; }
+      if (sol) { document.getElementById('t-sol').textContent = '$' + Number(sol.last).toFixed(2); document.getElementById('t-sol').className = 'ticker-price up'; }
     }
     // Update sentiment
     if (data.crypto && data.crypto.length) {
-      const btc = data.crypto.find(c => c.pair === 'XBTUSD');
-      const eth = data.crypto.find(c => c.pair === 'ETHUSD');
-      if (btc) document.getElementById('sent-btc').textContent = '$' + btc.last.toLocaleString() + (btc.last > btc.vwap24h ? ' +' : ' -');
-      if (eth) document.getElementById('sent-eth').textContent = '$' + eth.last.toLocaleString();
+      const btc = data.crypto.find(c => c.pair.includes('XBT') || c.pair.includes('BTC'));
+      const eth = data.crypto.find(c => c.pair.includes('ETH'));
+      if (btc) document.getElementById('sent-btc').textContent = '$' + Number(btc.last).toLocaleString();
+      if (eth) document.getElementById('sent-eth').textContent = '$' + Number(eth.last).toLocaleString();
     }
     return data;
   } catch(e) { console.error('Public markets error:', e); return {}; }
@@ -737,7 +738,7 @@ async function loadMarkets() {
       : '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">Alpaca API key required for stock data</td></tr>';
 
     // Crypto
-    const cryptoData = Array.isArray(data.crypto) ? data.crypto : [];
+    const cryptoData = Array.isArray(data.crypto) ? data.crypto : (Array.isArray(data) ? data : []);
     const cryptoBody = document.getElementById('crypto-tbody');
     cryptoBody.innerHTML = cryptoData.length
       ? cryptoData.map(c => `
