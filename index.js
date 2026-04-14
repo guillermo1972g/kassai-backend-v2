@@ -102,6 +102,48 @@ app.get('/api/agent/daily-ideas', async (req, res) => {
 
 
 
+
+// MODE SWITCHING - Paper (simulation) vs Live (real)
+let liveAlpaca = null;
+app.post('/mode/set-live', async (req, res) => {
+  try {
+    const { apiKey, secretKey } = req.body;
+    if (!apiKey || !secretKey) return res.status(400).json({ success: false, error: 'API keys required' });
+    const Alpaca = require('@alpacahq/alpaca-trade-api');
+    const testClient = new Alpaca({ keyId: apiKey, secretKey: secretKey, baseUrl: 'https://api.alpaca.markets', paper: false });
+    const account = await testClient.getAccount();
+    liveAlpaca = testClient;
+    res.json({ success: true, mode: 'live', equity: account.equity, message: 'Live mode activated' });
+  } catch(e) { res.status(400).json({ success: false, error: 'Invalid keys or connection failed: ' + e.message }); }
+});
+
+app.post('/mode/set-paper', (req, res) => {
+  liveAlpaca = null;
+  res.json({ success: true, mode: 'paper', message: 'Paper mode activated' });
+});
+
+app.get('/mode/status', async (req, res) => {
+  const mode = liveAlpaca ? 'live' : 'paper';
+  try {
+    const client = liveAlpaca || alpaca;
+    const account = await client.getAccount();
+    res.json({ mode, equity: account.equity, cash: account.cash, label: mode === 'live' ? 'OPERACIONES REALES' : 'SIMULACION' });
+  } catch(e) { res.json({ mode, error: e.message }); }
+});
+
+// POLYMARKET - Connect wallet and get balance
+app.post('/polymarket/connect', async (req, res) => {
+  try {
+    const { wallet, apiKey } = req.body;
+    if (!wallet) return res.status(400).json({ success: false, error: 'Wallet address required' });
+    // Check USDC balance on Polygon via public API
+    const r = await fetch('https://api.polygonscan.com/api?module=account&action=tokenbalance&contractaddress=0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174&address=' + wallet + '&tag=latest&apikey=YourApiKeyToken');
+    const d = await r.json();
+    const balance = d.result ? (parseInt(d.result) / 1e6).toFixed(2) : '0';
+    res.json({ success: true, wallet, balance, message: 'Polymarket wallet connected' });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // Auth - reset user password
 app.post('/auth/reset-password', async (req, res) => {
   try {
