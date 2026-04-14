@@ -1,0 +1,30 @@
+name: Notify Backend Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'index.html'
+      - '*.md'
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    name: Trigger Render Deploy
+
+    steps:
+      - name: Trigger Render Deploy Hook
+        run: |
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
+            curl -s "${{ secrets.RENDER_DEPLOY_HOOK }}"
+            echo "✅ Render deploy triggered"
+          else
+            echo "ℹ️  No RENDER_DEPLOY_HOOK set - Render auto-deploys from GitHub"
+          fi
+
+      - name: Log deploy info
+        run: |
+          echo "Backend deploy triggered at $(date)"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
