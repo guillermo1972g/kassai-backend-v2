@@ -4,7 +4,7 @@ const { createClient } = require('@supabase/supabase-js');
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const CONFIG = {
-  INTERVAL_MS: 90*1000, MAX_POSITIONS: 3, STOP_LOSS_PCT: 0.20, MIN_EDGE_PCT: 0.15,
+  INTERVAL_MS: 90*1000, MAX_POSITIONS: 3, STOP_LOSS_PCT: 0.20, MIN_EDGE_PCT: 0.05, // 5% for paper trading
   US_STOCKS: ['AAPL','TSLA','NVDA','MSFT','AMZN','GOOGL','META','AMD','SPY','QQQ'],
   CRYPTO: ['BTC/USD','ETH/USD','SOL/USD','DOGE/USD','AVAX/USD','LINK/USD'],
   GLOBAL_ETFS: ['EWJ','FXI','EWG','EWU','EWZ','EWT','EWY','VGK','EIS','ISRA'],// EIS/ISRA = Israel ETFs
@@ -91,13 +91,17 @@ async function checkTakeProfit(alpaca,account,sendWA){
 async function analyzeWithClaude(prices,account,mi){
   const avail=Math.min(account.cash,agentState.capitalLimit);const maxT=Math.floor(avail/CONFIG.MAX_POSITIONS);
   const ps=Object.entries(prices).slice(0,20).map(([k,v])=>k+':$'+parseFloat(v.price).toFixed(4)).join(', ');
-  const sys='You are GELT365.AI, elite global trading agent. Cash:$'+avail.toFixed(2)+' Max/trade:$'+maxT+' Positions:'+account.positionCount+'/'+CONFIG.MAX_POSITIONS+' Active:'+mi.open.join('+')+'\nAsset types: stock(USA only),crypto(24/7),etf(Asia/Europa ETFs),forex(USD/currency pairs). Min edge:'+CONFIG.MIN_EDGE_PCT*100+'%\nRespond ONLY valid JSON:{"recommendation":"BUY|SELL|PASS","asset":null,"qty":null,"price":null,"target":null,"stopLoss":null,"edge":0,"confidence":"HIGH|MEDIUM|LOW","reasoning":"","marketAnalysis":"","assetType":"stock|crypto|etf|forex","market":"USA|ASIA|EUROPA|FOREX|CRYPTO"}';
+  const sys='You are KASSANDRA, elite autonomous trading agent. Cash:$'+avail.toFixed(2)+' MaxPerTrade:$'+maxT+' OpenPositions:'+account.positionCount+'/'+CONFIG.MAX_POSITIONS+'\nActive markets: '+mi.open.join('+')+'\nCRITICAL: You MUST trade. Find the best opportunity in the data. For crypto use small quantities (0.001 BTC, 0.01 ETH, 1 SOL, 10 ADA). For polymarket use fraction of $50 max.\nMin edge threshold: '+CONFIG.MIN_EDGE_PCT*100+'% (be realistic - momentum, trend, or arbitrage edge counts)\nRules: assetType must match market (crypto=BTC/ETH/SOL/ADA, polymarket=POLY:xxxx). qty must be realistic for the price.\nRespond ONLY valid JSON no markdown: {"recommendation":"BUY|SELL|PASS","asset":"SYMBOL","qty":0.001,"price":0,"target":0,"stopLoss":0,"edge":0.1,"confidence":"HIGH|MEDIUM|LOW","reasoning":"brief","marketAnalysis":"brief","assetType":"crypto|polymarket|stock","market":"CRYPTO|USA"}';
   const resp=await anthropic.messages.create({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:[{role:'user',content:'Prices:'+ps+' | Positions:'+JSON.stringify(account.positions.map(p=>({s:p.symbol,pl:p.unrealized_plpc})))}]});
   try{const m=resp.content[0].text.match(/\{[\s\S]*\}/);return m?JSON.parse(m[0]):{recommendation:'PASS',edge:0};}catch(e){return{recommendation:'PASS',edge:0};}
 }
 async function executeTrade(alpaca,analysis,account){
   const{recommendation,asset,qty,price,target,stopLoss,edge,reasoning,assetType}=analysis;
-  if(!asset||!qty||edge<CONFIG.MIN_EDGE_PCT||account.positionCount>=CONFIG.MAX_POSITIONS)return null;
+  await log('INFO','Decision: '+recommendation+' '+asset+' qty:'+qty+' edge:'+(edge*100).toFixed(1)+'% type:'+assetType);
+  if(!asset||!qty||edge<CONFIG.MIN_EDGE_PCT||account.positionCount>=CONFIG.MAX_POSITIONS){
+    await log('WARN','Trade blocked: asset='+asset+' qty='+qty+' edge='+(edge*100).toFixed(1)+'% minEdge='+(CONFIG.MIN_EDGE_PCT*100)+'% pos='+account.positionCount);
+    return null;
+  }
   const cost=(price||0)*qty;const avail=Math.min(account.cash||500,agentState.capitalLimit);
   if(cost>avail&&cost>0){await log('WARN','Fondos insuf: $'+cost.toFixed(2));return null;}
 
