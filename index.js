@@ -101,6 +101,25 @@ app.get('/api/agent/daily-ideas', async (req, res) => {
 });
 
 
+
+// Auth - reset user password
+app.post('/auth/reset-password', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    const { createClient } = require('@supabase/supabase-js');
+    const adminClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+    // Find user by email
+    const { data: users } = await adminClient.auth.admin.listUsers();
+    const user = users?.users?.find(u => u.email === email);
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    // Update password
+    const { error } = await adminClient.auth.admin.updateUserById(user.id, { password, email_confirm: true });
+    if (error) return res.status(400).json({ success: false, error: error.message });
+    res.json({ success: true, message: 'Password updated' });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // Auth - create user without email confirmation
 app.post('/auth/create-user', async (req, res) => {
   try {
