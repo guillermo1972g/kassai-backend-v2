@@ -3,954 +3,804 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>KASS.AI -- Autonomous Trading Terminal</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<title>KASS.AI v3.0 -- Bloomberg Terminal of the AI Era</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-:root {
-  --bg: #0a0a0a;
-  --bg2: #111111;
-  --bg3: #161616;
-  --border: #222222;
-  --orange: #FF6600;
-  --green: #00FF41;
-  --red: #FF3333;
-  --yellow: #FFD700;
-  --blue: #00BFFF;
-  --cyan: #00FFFF;
-  --text: #CCCCCC;
-  --text2: #888888;
-  --text3: #555555;
-  --font-mono: 'IBM Plex Mono', monospace;
-  --font-sans: 'IBM Plex Sans', sans-serif;
-}
+:root{--bg:#060606;--bg2:#0e0e0e;--bg3:#141414;--bg4:#1a1a1a;--border:#1e1e1e;--border2:#252525;--orange:#FF6600;--green:#00FF41;--red:#FF3333;--yellow:#FFD700;--blue:#00BFFF;--purple:#9966FF;--cyan:#00FFFF;--text:#CCCCCC;--text2:#888888;--text3:#444444;--mono:'IBM Plex Mono',monospace;}
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-mono);font-size:12px;overflow:hidden;}
-
-/* ─── Layout ─────────────────────────────── */
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);font-size:12px;overflow:hidden;}
 .terminal{display:flex;flex-direction:column;height:100vh;}
-.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 12px;display:flex;align-items:center;gap:12px;height:36px;flex-shrink:0;}
-.logo{color:var(--orange);font-weight:700;font-size:14px;letter-spacing:2px;}
-.logo span{color:var(--text2);font-weight:300;}
-.mode-badge{padding:2px 8px;border-radius:2px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;}
-.mode-badge.paper{background:#1a2a1a;color:var(--green);border:1px solid var(--green);}
-.mode-badge.live{background:#2a1a1a;color:var(--red);border:1px solid var(--red);animation:pulse-red 2s infinite;}
-@keyframes pulse-red{0%,100%{box-shadow:0 0 4px var(--red);}50%{box-shadow:0 0 12px var(--red);}}
-.agent-btn{padding:3px 10px;border-radius:2px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid;font-family:var(--font-mono);transition:all .2s;letter-spacing:.5px;}
-.btn-start{background:#003300;color:var(--green);border-color:var(--green);}
-.btn-start:hover{background:#004400;}
-.btn-stop{background:#330000;color:var(--red);border-color:var(--red);}
-.btn-stop:hover{background:#440000;}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-.clock{color:var(--text2);font-size:11px;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 10px;display:flex;align-items:center;gap:10px;height:34px;flex-shrink:0;}
+.logo{color:var(--orange);font-weight:700;font-size:13px;letter-spacing:3px;}
+.logo span{color:var(--text3);}
+.logo sub{font-size:8px;color:var(--text3);letter-spacing:1px;}
+.mode-badge{padding:2px 8px;font-size:9px;font-weight:700;letter-spacing:1px;cursor:pointer;border:1px solid;}
+.mode-paper{background:#0d1a0d;color:var(--green);border-color:var(--green);}
+.mode-live{background:#1a0d0d;color:var(--red);border-color:var(--red);}
+.agent-btn{padding:3px 10px;font-size:9px;font-weight:700;cursor:pointer;border:1px solid;font-family:var(--mono);letter-spacing:1px;}
+.btn-start{background:#001a00;color:var(--green);border-color:var(--green);}
+.btn-stop{background:#1a0000;color:var(--red);border-color:var(--red);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.clock{color:var(--text3);font-size:10px;}
 .status-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);}
 .status-dot.running{background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 1s infinite;}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
-
-/* ─── Main content ────────────────────────── */
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.tb-metric{color:var(--text3);font-size:10px;}
+.tb-metric span{color:var(--text2);}
 .main{display:flex;flex:1;overflow:hidden;}
-.sidebar{width:200px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
-.nav-section{padding:8px 0;}
-.nav-label{padding:4px 12px;color:var(--text3);font-size:10px;letter-spacing:2px;text-transform:uppercase;}
-.nav-item{padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text2);transition:all .15s;border-left:2px solid transparent;}
+.sidebar{width:185px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.nav-section{padding:5px 0;}
+.nav-label{padding:5px 12px;color:var(--text3);font-size:9px;letter-spacing:2px;text-transform:uppercase;}
+.nav-item{padding:5px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text2);border-left:2px solid transparent;font-size:11px;transition:all .1s;}
 .nav-item:hover{background:var(--bg3);color:var(--text);}
 .nav-item.active{background:var(--bg3);color:var(--orange);border-left-color:var(--orange);}
-.nav-item .dot{width:5px;height:5px;border-radius:50%;background:var(--text3);}
-.nav-item.active .dot{background:var(--orange);}
-.nav-divider{border-top:1px solid var(--border);margin:4px 0;}
-
-/* Capital widget */
-.capital-widget{padding:12px;border-top:1px solid var(--border);margin-top:auto;}
-.cap-label{color:var(--text3);font-size:10px;letter-spacing:1px;margin-bottom:4px;}
-.cap-value{color:var(--green);font-size:16px;font-weight:700;}
-.cap-pnl{font-size:10px;margin-top:2px;}
-.cap-pnl.positive{color:var(--green);}
-.cap-pnl.negative{color:var(--red);}
-
-/* ─── Content panel ───────────────────────── */
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+.nav-item.active .nav-dot{background:var(--orange);}
+.nav-divider{border-top:1px solid var(--border);margin:3px 0;}
+.capital-widget{padding:10px 12px;border-top:1px solid var(--border);margin-top:auto;flex-shrink:0;}
+.cap-label{color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:3px;}
+.cap-value{color:var(--green);font-size:18px;font-weight:700;}
+.cap-pnl{font-size:10px;margin-top:1px;}
+.cap-pos{color:var(--green);}
+.cap-neg{color:var(--red);}
 .content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.panel-header{padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;gap:8px;}
-.panel-title{color:var(--orange);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
-.panel-subtitle{color:var(--text3);font-size:10px;}
-.panel-body{flex:1;overflow-y:auto;padding:12px;}
-
-/* ─── Dashboard grid ─────────────────────── */
-.dash-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;}
-.metric-card{background:var(--bg2);border:1px solid var(--border);padding:10px 12px;border-radius:2px;}
-.metric-label{color:var(--text3);font-size:10px;letter-spacing:1px;margin-bottom:4px;}
-.metric-value{font-size:18px;font-weight:700;}
-.metric-value.green{color:var(--green);}
-.metric-value.orange{color:var(--orange);}
-.metric-value.red{color:var(--red);}
-.metric-value.blue{color:var(--blue);}
-.metric-sub{color:var(--text3);font-size:10px;margin-top:2px;}
-
-/* ─── Market ticker ──────────────────────── */
-.ticker-bar{background:var(--bg2);border:1px solid var(--border);padding:8px 12px;margin-bottom:10px;display:flex;gap:20px;overflow-x:auto;flex-wrap:nowrap;}
-.ticker-item{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
-.ticker-sym{color:var(--text2);font-size:10px;letter-spacing:1px;}
-.ticker-price{font-size:13px;font-weight:600;}
-.ticker-chg{font-size:10px;}
+.panel-header{padding:7px 12px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.panel-title{color:var(--orange);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+.panel-sub{color:var(--text3);font-size:9px;}
+.panel-body{flex:1;overflow-y:auto;padding:10px;}
+.panel{display:none;flex-direction:column;flex:1;overflow:hidden;}
+.panel.active{display:flex;}
+.dash-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px;}
+.metric-card{background:var(--bg2);border:1px solid var(--border);padding:10px;}
+.metric-card.accent{border-left:2px solid var(--orange);}
+.metric-label{color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:3px;}
+.metric-value{font-size:16px;font-weight:700;}
+.metric-sub{color:var(--text3);font-size:9px;margin-top:2px;}
+.c-green{color:var(--green);}
+.c-red{color:var(--red);}
+.c-orange{color:var(--orange);}
+.c-blue{color:var(--blue);}
+.c-purple{color:var(--purple);}
+.c-yellow{color:var(--yellow);}
+.ticker-bar{background:var(--bg2);border:1px solid var(--border);padding:6px 12px;margin-bottom:8px;display:flex;gap:20px;overflow-x:auto;}
+.ticker-item{display:flex;flex-direction:column;gap:1px;flex-shrink:0;}
+.ticker-sym{color:var(--text3);font-size:9px;letter-spacing:1px;}
+.ticker-price{font-size:12px;font-weight:600;}
 .up{color:var(--green);}
-.down{color:var(--red);}
-
-/* ─── Agent control panel ────────────────── */
-.agent-panel{background:var(--bg2);border:1px solid var(--border);padding:12px;margin-bottom:10px;}
-.agent-panel-title{color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:10px;font-weight:600;}
-.agent-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.agent-stat{background:var(--bg3);padding:8px;border-radius:2px;}
-.agent-stat-label{color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:3px;}
-.agent-stat-value{font-size:12px;font-weight:600;color:var(--text);}
-.market-toggles{display:flex;gap:8px;margin-top:10px;}
-.market-toggle{padding:3px 10px;border-radius:2px;font-size:10px;cursor:pointer;border:1px solid var(--border);color:var(--text3);font-family:var(--font-mono);}
-.market-toggle.active.poly{background:#1a0a2a;color:#9966FF;border-color:#9966FF;}
-.market-toggle.active.stocks{background:#0a1a2a;color:var(--blue);border-color:var(--blue);}
-.market-toggle.active.crypto{background:#2a1a0a;color:var(--yellow);border-color:var(--yellow);}
-
-/* ─── Table ───────────────────────────────── */
+.dn{color:var(--red);}
 .data-table{width:100%;border-collapse:collapse;font-size:11px;}
-.data-table th{color:var(--text3);font-size:10px;letter-spacing:1px;text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);font-weight:500;}
-.data-table td{padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text);}
+.data-table th{color:var(--text3);font-size:9px;letter-spacing:1px;text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);font-weight:500;}
+.data-table td{padding:6px 8px;border-bottom:1px solid var(--border);}
 .data-table tr:hover td{background:var(--bg3);}
-.badge{padding:1px 6px;border-radius:2px;font-size:9px;font-weight:700;letter-spacing:.5px;}
-.badge.buy{background:#003300;color:var(--green);}
-.badge.sell{background:#330000;color:var(--red);}
-.badge.paper{background:#1a1a00;color:var(--yellow);}
-.badge.live{background:#2a0000;color:var(--red);}
-.badge.yes{background:#003300;color:var(--green);}
-.badge.no{background:#330000;color:var(--red);}
-
-/* ─── Activity log ────────────────────────── */
-.log-entry{padding:5px 8px;border-bottom:1px solid #1a1a1a;display:flex;gap:8px;align-items:flex-start;}
-.log-time{color:var(--text3);font-size:10px;flex-shrink:0;width:60px;}
-.log-type{font-size:9px;padding:1px 5px;border-radius:1px;flex-shrink:0;}
-.log-type.info{background:#1a1a2a;color:var(--blue);}
-.log-type.trade{background:#1a2a1a;color:var(--green);}
-.log-type.warn{background:#2a2a0a;color:var(--yellow);}
-.log-type.error{background:#2a0a0a;color:var(--red);}
+.badge{padding:1px 6px;font-size:9px;font-weight:700;}
+.badge-buy{background:#001a00;color:var(--green);}
+.badge-sell{background:#1a0000;color:var(--red);}
+.badge-paper{background:#1a1a00;color:var(--yellow);}
+.badge-live{background:#1a0000;color:var(--red);}
+.badge-open{background:rgba(0,191,255,0.1);color:var(--blue);}
+.log-entry{padding:4px 10px;border-bottom:1px solid #0d0d0d;display:flex;gap:8px;align-items:flex-start;}
+.log-time{color:var(--text3);font-size:9px;flex-shrink:0;width:56px;padding-top:1px;}
+.log-type{font-size:8px;padding:1px 5px;flex-shrink:0;letter-spacing:.5px;}
+.lt-info{background:#0a0a14;color:var(--blue);}
+.lt-trade{background:#0a140a;color:var(--green);}
+.lt-warn{background:#14140a;color:var(--yellow);}
+.lt-error{background:#140a0a;color:var(--red);}
+.lt-kass{background:#140a00;color:var(--orange);}
 .log-msg{color:var(--text);font-size:11px;line-height:1.4;}
-
-/* ─── Analysis pane ───────────────────────── */
-.analysis-box{background:var(--bg3);border:1px solid var(--border);padding:12px;font-size:12px;line-height:1.7;color:var(--text);min-height:120px;white-space:pre-wrap;}
-.analysis-prompt{display:flex;gap:8px;margin-top:10px;}
-.analysis-input{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 10px;font-family:var(--font-mono);font-size:11px;outline:none;}
-.analysis-input:focus{border-color:var(--orange);}
-.analysis-submit{background:var(--orange);color:#000;border:none;padding:6px 14px;font-family:var(--font-mono);font-size:11px;font-weight:700;cursor:pointer;}
-
-/* ─── Bottom bar ──────────────────────────── */
-.bottombar{background:var(--bg2);border-top:1px solid var(--border);padding:4px 12px;display:flex;align-items:center;gap:16px;height:24px;flex-shrink:0;}
-.bb-item{color:var(--text3);font-size:10px;}
-.bb-item span{color:var(--text2);}
-.bb-agent{color:var(--green);font-size:10px;}
-
-/* ─── Scrollbar ───────────────────────────── */
-::-webkit-scrollbar{width:4px;height:4px;}
-::-webkit-scrollbar-track{background:var(--bg2);}
-::-webkit-scrollbar-thumb{background:var(--border);}
-
-/* ─── Tabs ─────────────────────────────────── */
 .tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg2);}
-.tab{padding:8px 16px;cursor:pointer;color:var(--text3);font-size:11px;border-bottom:2px solid transparent;transition:all .15s;}
-.tab:hover{color:var(--text);}
+.tab{padding:7px 14px;cursor:pointer;color:var(--text3);font-size:10px;border-bottom:2px solid transparent;transition:all .1s;}
 .tab.active{color:var(--orange);border-bottom-color:var(--orange);}
-
-/* ─── Responsive sidebar ──────────────────── */
-.sidebar-divider{height:1px;background:var(--border);margin:4px 0;}
+.analysis-box{background:var(--bg3);border:1px solid var(--border);padding:12px;font-size:11px;line-height:1.8;color:var(--text);min-height:140px;white-space:pre-wrap;}
+.analysis-prompt{display:flex;gap:8px;margin-top:10px;}
+.analysis-input{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 10px;font-family:var(--mono);font-size:11px;outline:none;}
+.analysis-input:focus{border-color:var(--orange);}
+.analysis-submit{background:var(--orange);color:#000;border:none;padding:6px 14px;font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;}
+.copilot-split{display:grid;grid-template-columns:1fr 320px;gap:10px;height:100%;}
+.copilot-chat{background:var(--bg2);border:1px solid var(--border);display:flex;flex-direction:column;}
+.chat-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
+.chat-msg{padding:8px 12px;font-size:11px;line-height:1.6;}
+.chat-kass{background:var(--bg3);border-left:2px solid var(--orange);color:var(--text);}
+.chat-user{background:rgba(0,255,65,0.04);border-left:2px solid var(--green);color:var(--text);}
+.chat-label{font-size:9px;letter-spacing:1px;margin-bottom:4px;}
+.chat-label-kass{color:var(--orange);}
+.chat-label-user{color:var(--green);}
+.chat-input-row{border-top:1px solid var(--border);padding:8px;display:flex;gap:8px;}
+.chat-input{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 10px;font-family:var(--mono);font-size:11px;outline:none;}
+.chat-input:focus{border-color:var(--orange);}
+.chat-send{background:var(--orange);color:#000;border:none;padding:6px 14px;font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;}
+.verdict-box{padding:14px;border:1px solid var(--border);background:var(--bg2);}
+.verdict-label{font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:6px;}
+.verdict-val{font-size:20px;font-weight:700;letter-spacing:2px;}
+.v-favorable{color:var(--green);}
+.v-neutral{color:var(--yellow);}
+.v-desfavorable{color:var(--red);}
+.copilot-side{display:flex;flex-direction:column;gap:8px;}
+.copilot-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.cm{background:var(--bg3);border:1px solid var(--border);padding:8px;}
+.cm-label{font-size:9px;color:var(--text3);letter-spacing:1px;margin-bottom:2px;}
+.cm-val{font-size:12px;font-weight:600;}
+.risk-tags{display:flex;flex-wrap:wrap;gap:5px;}
+.risk-tag{background:rgba(255,51,51,0.1);border:1px solid rgba(255,51,51,0.3);color:var(--red);font-size:9px;padding:2px 7px;}
+.hf-metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);margin-bottom:10px;}
+.hfm{background:var(--bg2);padding:14px 10px;text-align:center;}
+.hfm-val{font-size:20px;font-weight:700;display:block;}
+.hfm-lbl{font-size:9px;color:var(--text3);letter-spacing:1px;margin-top:3px;display:block;}
+.strategy-table{width:100%;border-collapse:collapse;}
+.strategy-table th{color:var(--text3);font-size:9px;letter-spacing:1px;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;}
+.strategy-table td{padding:8px 10px;border-bottom:1px solid var(--border);font-size:11px;}
+.strat-active{background:rgba(0,255,65,0.1);color:var(--green);border:1px solid rgba(0,255,65,0.3);font-size:9px;padding:2px 8px;}
+.risk-meter{background:var(--bg2);border:1px solid var(--border);padding:14px;}
+.rm-label{font-size:9px;letter-spacing:1px;color:var(--text3);margin-bottom:8px;}
+.rm-val{font-size:24px;font-weight:700;}
+.rm-bar{background:var(--bg3);height:4px;margin-top:8px;}
+.rm-fill{height:4px;background:var(--red);}
+.exp-row{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid var(--border);}
+.exp-name{font-size:10px;color:var(--text2);width:80px;flex-shrink:0;}
+.exp-track{flex:1;background:var(--bg3);height:3px;}
+.exp-fill{height:3px;background:var(--orange);}
+.exp-pct{font-size:10px;width:36px;text-align:right;}
+.diary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.score-ring{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+.score-num{font-size:52px;font-weight:700;}
+.score-lbl{font-size:9px;letter-spacing:2px;color:var(--text3);margin-top:4px;}
+.bias-item{background:var(--bg3);border:1px solid var(--border);padding:8px 12px;display:flex;align-items:center;gap:10px;margin-bottom:5px;}
+.bias-icon{width:18px;height:18px;border-radius:50%;background:rgba(255,51,51,0.2);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--red);flex-shrink:0;}
+.insight-box{background:var(--bg3);border:1px solid var(--border);border-left:2px solid var(--purple);padding:12px;font-size:11px;line-height:1.8;color:var(--text);}
+.news-split{display:grid;grid-template-columns:1fr 280px;gap:10px;}
+.news-hl{padding:7px 10px;border-bottom:1px solid #0d0d0d;display:flex;gap:8px;align-items:flex-start;}
+.news-hl:nth-child(even){background:var(--bg3);}
+.news-time{color:var(--text3);font-size:9px;width:46px;flex-shrink:0;}
+.news-src{font-size:9px;padding:1px 5px;background:rgba(255,102,0,0.1);color:var(--orange);flex-shrink:0;}
+.news-title{font-size:11px;line-height:1.5;}
+.proj-box{background:var(--bg2);border:1px solid var(--border);border-left:2px solid var(--orange);padding:12px;font-size:11px;line-height:1.8;}
+.bottombar{background:var(--bg2);border-top:1px solid var(--border);padding:3px 10px;display:flex;align-items:center;gap:14px;height:22px;flex-shrink:0;}
+.bb-item{color:var(--text3);font-size:9px;}
+.bb-item span{color:var(--text2);}
+.bb-agent{font-size:9px;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border2);}
 </style>
 </head>
 <body>
 <div class="terminal">
+<div class="topbar">
+  <div class="logo">KASS<span>.AI</span> <sub>v3.0</sub></div>
+  <div class="status-dot" id="agentDot"></div>
+  <div id="modeBadge" class="mode-badge mode-paper" onclick="toggleMode()">[P] PAPER</div>
+  <button class="agent-btn btn-start" id="btnStart" onclick="startAgent()">>> START AGENT</button>
+  <button class="agent-btn btn-stop" id="btnStop" onclick="stopAgent()" style="display:none">-- STOP</button>
+  <div class="topbar-right">
+    <div class="tb-metric">CYCLE: <span id="tbCycle">0</span></div>
+    <div class="tb-metric">POS: <span id="tbPos">0</span>/3</div>
+    <div class="tb-metric">SHARPE: <span id="tbSharpe" class="up">--</span></div>
+    <div class="tb-metric">WIN: <span id="tbWin" class="up">--</span></div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+</div>
+<div class="main">
+<div class="sidebar">
+  <div class="nav-section">
+    <div class="nav-label">TERMINAL</div>
+    <div class="nav-item active" onclick="nav('dashboard')" id="nav-dashboard"><div class="nav-dot"></div>Dashboard</div>
+    <div class="nav-item" onclick="nav('copilot')" id="nav-copilot"><div class="nav-dot"></div>Copiloto IA</div>
+    <div class="nav-item" onclick="nav('agent')" id="nav-agent"><div class="nav-dot"></div>Agent Control</div>
+    <div class="nav-item" onclick="nav('markets')" id="nav-markets"><div class="nav-dot"></div>Live Markets</div>
+  </div>
+  <div class="nav-divider"></div>
+  <div class="nav-section">
+    <div class="nav-label">TRADING</div>
+    <div class="nav-item" onclick="nav('positions')" id="nav-positions"><div class="nav-dot"></div>Positions</div>
+    <div class="nav-item" onclick="nav('simtrades')" id="nav-simtrades"><div class="nav-dot"></div>Sim Trades</div>
+    <div class="nav-item" onclick="nav('suggestions')" id="nav-suggestions"><div class="nav-dot"></div>Suggestions</div>
+  </div>
+  <div class="nav-divider"></div>
+  <div class="nav-section">
+    <div class="nav-label">RISK AND INTEL</div>
+    <div class="nav-item" onclick="nav('riskengine')" id="nav-riskengine"><div class="nav-dot"></div>Risk Engine</div>
+    <div class="nav-item" onclick="nav('performance')" id="nav-performance"><div class="nav-dot"></div>Performance</div>
+    <div class="nav-item" onclick="nav('hedgefund')" id="nav-hedgefund"><div class="nav-dot"></div>Hedge Fund Mode</div>
+  </div>
+  <div class="nav-divider"></div>
+  <div class="nav-section">
+    <div class="nav-label">ANALYSIS</div>
+    <div class="nav-item" onclick="nav('analysis')" id="nav-analysis"><div class="nav-dot"></div>AI Analysis</div>
+    <div class="nav-item" onclick="nav('diary')" id="nav-diary"><div class="nav-dot"></div>Diario IA</div>
+    <div class="nav-item" onclick="nav('news')" id="nav-news"><div class="nav-dot"></div>News and Projections</div>
+    <div class="nav-item" onclick="nav('activity')" id="nav-activity"><div class="nav-dot"></div>Activity Log</div>
+  </div>
+  <div class="capital-widget">
+    <div class="cap-label">CAPITAL</div>
+    <div class="cap-value" id="capVal">$500.00</div>
+    <div class="cap-pnl cap-pos" id="capPnl">+$0.00 (0.00%)</div>
+  </div>
+</div>
+<div class="content">
 
-  <!-- TOP BAR -->
-  <div class="topbar">
-    <div class="logo">KASS<span>.AI</span></div>
-    <div class="status-dot" id="agentDot"></div>
-    <div id="modeBadge" class="mode-badge paper" onclick="toggleMode()">[P] PAPER</div>
-    <button class="agent-btn btn-start" id="btnStart" onclick="startAgent()">>> START AGENT</button>
-    <button class="agent-btn btn-stop" id="btnStop" onclick="stopAgent()" style="display:none">-- STOP</button>
-    <div class="topbar-right">
-      <div class="bb-item">CYCLE: <span id="cycleCount">0</span></div>
-      <div class="bb-item">POSITIONS: <span id="posCount">0</span>/3</div>
-      <div class="clock" id="clock">--:--:--</div>
+<!-- DASHBOARD -->
+<div class="panel active" id="panel-dashboard">
+  <div class="panel-header"><div class="panel-title">Dashboard</div><div class="panel-sub">Autonomous Trading Overview -- KASS.AI v3.0</div></div>
+  <div class="panel-body">
+    <div class="dash-grid">
+      <div class="metric-card accent"><div class="metric-label">CAPITAL</div><div class="metric-value c-green" id="m-capital">$500.00</div><div class="metric-sub">Available</div></div>
+      <div class="metric-card"><div class="metric-label">P&amp;L TODAY</div><div class="metric-value c-orange" id="m-pnl">$0.00</div><div class="metric-sub">Unrealized</div></div>
+      <div class="metric-card"><div class="metric-label">OPEN POS.</div><div class="metric-value c-blue" id="m-positions">0</div><div class="metric-sub">Max 3</div></div>
+      <div class="metric-card"><div class="metric-label">SHARPE</div><div class="metric-value c-green" id="m-sharpe">--</div><div class="metric-sub">Annualized</div></div>
+      <div class="metric-card"><div class="metric-label">WIN RATE</div><div class="metric-value" id="m-winrate">--</div><div class="metric-sub">Closed trades</div></div>
+      <div class="metric-card"><div class="metric-label">CYCLE</div><div class="metric-value" id="m-cycle">0</div><div class="metric-sub">90s interval</div></div>
+    </div>
+    <div class="ticker-bar">
+      <div class="ticker-item"><div class="ticker-sym">BTC/USD</div><div class="ticker-price" id="t-btc">--</div></div>
+      <div class="ticker-item"><div class="ticker-sym">ETH/USD</div><div class="ticker-price" id="t-eth">--</div></div>
+      <div class="ticker-item"><div class="ticker-sym">SOL/USD</div><div class="ticker-price" id="t-sol">--</div></div>
+      <div class="ticker-item"><div class="ticker-sym">ADA/USD</div><div class="ticker-price" id="t-ada">--</div></div>
+      <div class="ticker-item"><div class="ticker-sym">SPY</div><div class="ticker-price" id="t-spy">--</div></div>
+      <div class="ticker-item"><div class="ticker-sym">QQQ</div><div class="ticker-price" id="t-qqq">--</div></div>
+      <div class="ticker-item"><div class="ticker-sym">TSLA</div><div class="ticker-price" id="t-tsla">--</div></div>
+      <div class="ticker-item"><div class="ticker-sym">NVDA</div><div class="ticker-price" id="t-nvda">--</div></div>
+    </div>
+    <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:5px;font-weight:700;">RECENT ACTIVITY</div>
+    <div id="dashLog" style="background:var(--bg2);border:1px solid var(--border);max-height:220px;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- COPILOTO -->
+<div class="panel" id="panel-copilot">
+  <div class="panel-header"><div class="panel-title">Copiloto IA</div><div class="panel-sub">Pre-trade analysis -- KASSANDRA multi-agent</div></div>
+  <div class="panel-body" style="padding:10px;">
+    <div class="copilot-split" style="height:100%;">
+      <div class="copilot-chat">
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-msg chat-kass"><div class="chat-label chat-label-kass">KASSANDRA //</div>Sistema activo. Dame el activo y la direccion que consideras. Analizare macro, setup probabilistico, riesgo y tamano de posicion antes de que ejecutes.</div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chatInput" placeholder="ej: BTC compra en soporte 74k, o NVDA venta en resistencia..." onkeydown="if(event.key==='Enter')sendCopilot()"/>
+          <button class="chat-send" onclick="sendCopilot()">ANALIZAR</button>
+        </div>
+      </div>
+      <div class="copilot-side">
+        <div class="verdict-box">
+          <div class="verdict-label">VEREDICTO KASS</div>
+          <div class="verdict-val v-neutral" id="copilotVerdict">ESPERANDO</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px;" id="copilotConf">Ingresa un trade para analizar</div>
+        </div>
+        <div class="copilot-metrics">
+          <div class="cm"><div class="cm-label">SETUP QUALITY</div><div class="cm-val" id="cSetup">--</div></div>
+          <div class="cm"><div class="cm-label">RISK/REWARD</div><div class="cm-val" id="cRR">--</div></div>
+          <div class="cm"><div class="cm-label">CONFIANZA</div><div class="cm-val" id="cConf">--</div></div>
+          <div class="cm"><div class="cm-label">REGIME</div><div class="cm-val" id="cRegime">--</div></div>
+          <div class="cm" style="grid-column:span 2"><div class="cm-label">SIZE SUGERIDO</div><div class="cm-val" id="cSize">--</div></div>
+        </div>
+        <div>
+          <div style="color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:6px;">RIESGOS DETECTADOS</div>
+          <div class="risk-tags" id="cRisks"><div style="color:var(--text3);font-size:10px;">-- Esperando analisis --</div></div>
+        </div>
+      </div>
     </div>
   </div>
+</div>
 
-  <div class="main">
-
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-      <div class="nav-section">
-        <div class="nav-label">TERMINAL</div>
-        <div class="nav-item active" onclick="showPanel('dashboard')" id="nav-dashboard">
-          <div class="dot"></div>Dashboard
+<!-- AGENT CONTROL -->
+<div class="panel" id="panel-agent">
+  <div class="panel-header"><div class="panel-title">Agent Control</div><div class="panel-sub">KASS Autonomous Engine 24/7 -- Multi-market</div></div>
+  <div class="panel-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:12px;">
+        <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:10px;font-weight:700;">AGENT STATUS</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div style="background:var(--bg3);padding:8px;"><div style="color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:2px;">STATUS</div><div style="font-size:11px;font-weight:600;" id="a-status">STOPPED</div></div>
+          <div style="background:var(--bg3);padding:8px;"><div style="color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:2px;">MODE</div><div style="font-size:11px;font-weight:600;" id="a-mode">PAPER</div></div>
+          <div style="background:var(--bg3);padding:8px;"><div style="color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:2px;">CYCLE</div><div style="font-size:11px;font-weight:600;" id="a-cycle">0</div></div>
+          <div style="background:var(--bg3);padding:8px;"><div style="color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:2px;">CAPITAL</div><div style="font-size:11px;font-weight:600;" id="a-capital">$500</div></div>
         </div>
-        <div class="nav-item" onclick="showPanel('agent')" id="nav-agent">
-          <div class="dot"></div>Agent Control
-        </div>
-        <div class="nav-item" onclick="showPanel('markets')" id="nav-markets">
-          <div class="dot"></div>Live Markets
-        </div>
-      </div>
-      <div class="nav-divider"></div>
-      <div class="nav-section">
-        <div class="nav-label">TRADING</div>
-        <div class="nav-item" onclick="showPanel('positions')" id="nav-positions">
-          <div class="dot"></div>Positions
-        </div>
-        <div class="nav-item" onclick="showPanel('simtrades')" id="nav-simtrades">
-          <div class="dot"></div>Sim Trades
-        </div>
-        <div class="nav-item" onclick="showPanel('suggestions')" id="nav-suggestions">
-          <div class="dot"></div>Suggestions
+        <div style="display:flex;gap:8px;">
+          <button class="agent-btn btn-start" style="flex:1;padding:8px" onclick="startAgent()">>> START 24/7</button>
+          <button class="agent-btn btn-stop" style="flex:1;padding:8px" onclick="stopAgent()">-- STOP</button>
         </div>
       </div>
-      <div class="nav-divider"></div>
-      <div class="nav-section">
-        <div class="nav-label">ANALYSIS</div>
-        <div class="nav-item" onclick="showPanel('analysis')" id="nav-analysis">
-          <div class="dot"></div>AI Analysis
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:12px;">
+        <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:10px;font-weight:700;">RISK PARAMS</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Stop loss global</span><span class="dn">20%</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Min edge required</span><span class="up">15%</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Max positions</span><span class="c-blue">3</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Cycle interval</span><span>90s</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Max capital</span><span class="c-orange">$500</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Markets</span><span class="c-yellow">CRYPTO+STOCKS+POLY</span></div>
         </div>
-        <div class="nav-item" onclick="showPanel('activity')" id="nav-activity">
-          <div class="dot"></div>Activity Log
-        </div>
-      </div>
-      <div class="nav-divider"></div>
-      <div class="nav-section">
-        <div class="nav-label">INTEL</div>
-        <div class="nav-item" onclick="showPanel('performance')" id="nav-performance">
-          <div class="dot"></div>Performance
-        </div>
-        <div class="nav-item" onclick="showPanel('news')" id="nav-news">
-          <div class="dot"></div>News & Projections
-        </div>
-      </div>
-
-      <div class="capital-widget">
-        <div class="cap-label">CAPITAL</div>
-        <div class="cap-value" id="capitalValue">$500.00</div>
-        <div class="cap-pnl positive" id="capitalPnl">+$0.00 (0.00%)</div>
       </div>
     </div>
-
-    <!-- CONTENT -->
-    <div class="content">
-
-      <!-- DASHBOARD PANEL -->
-      <div id="panel-dashboard">
-        <div class="panel-header">
-          <div class="panel-title">Dashboard</div>
-          <div class="panel-subtitle">Autonomous Trading Overview</div>
-        </div>
-        <div class="panel-body">
-          <div class="dash-grid">
-            <div class="metric-card">
-              <div class="metric-label">CAPITAL</div>
-              <div class="metric-value green" id="m-capital">$500.00</div>
-              <div class="metric-sub">Available</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-label">P&L TODAY</div>
-              <div class="metric-value orange" id="m-pnl">$0.00</div>
-              <div class="metric-sub">Unrealized</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-label">OPEN POS.</div>
-              <div class="metric-value blue" id="m-positions">0</div>
-              <div class="metric-sub">Max 3</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-label">CYCLE</div>
-              <div class="metric-value" id="m-cycle">0</div>
-              <div class="metric-sub">90s interval</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-label">WIN RATE</div>
-              <div class="metric-value green" id="m-winrate">--</div>
-              <div class="metric-sub">Closed trades</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-label">UPTIME</div>
-              <div class="metric-value" id="m-uptime">--</div>
-              <div class="metric-sub">Since start</div>
-            </div>
-          </div>
-
-          <!-- Ticker bar -->
-          <div class="ticker-bar" id="tickerBar">
-            <div class="ticker-item"><div class="ticker-sym">BTC/USD</div><div class="ticker-price" id="t-btc">--</div><div class="ticker-chg" id="tc-btc">--</div></div>
-            <div class="ticker-item"><div class="ticker-sym">ETH/USD</div><div class="ticker-price" id="t-eth">--</div><div class="ticker-chg" id="tc-eth">--</div></div>
-            <div class="ticker-item"><div class="ticker-sym">SOL/USD</div><div class="ticker-price" id="t-sol">--</div><div class="ticker-chg" id="tc-sol">--</div></div>
-            <div class="ticker-item"><div class="ticker-sym">SPY</div><div class="ticker-price" id="t-spy">--</div><div class="ticker-chg" id="tc-spy">--</div></div>
-            <div class="ticker-item"><div class="ticker-sym">QQQ</div><div class="ticker-price" id="t-qqq">--</div><div class="ticker-chg" id="tc-qqq">--</div></div>
-            <div class="ticker-item"><div class="ticker-sym">TSLA</div><div class="ticker-price" id="t-tsla">--</div><div class="ticker-chg" id="tc-tsla">--</div></div>
-            <div class="ticker-item"><div class="ticker-sym">NVDA</div><div class="ticker-price" id="t-nvda">--</div><div class="ticker-chg" id="tc-nvda">--</div></div>
-          </div>
-
-          <!-- Recent activity -->
-          <div style="color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:6px;font-weight:600;">RECENT ACTIVITY</div>
-          <div id="dashLog" style="background:var(--bg2);border:1px solid var(--border);">
-            <div class="log-entry"><div class="log-time">--:--:--</div><div class="log-type info">INFO</div><div class="log-msg">KASS Terminal initialized. Waiting for agent start.</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- AGENT CONTROL PANEL -->
-      <div id="panel-agent" style="display:none">
-        <div class="panel-header">
-          <div class="panel-title">Agent Control</div>
-          <div class="panel-subtitle">KASS Autonomous Engine</div>
-        </div>
-        <div class="panel-body">
-          <div class="agent-panel">
-            <div class="agent-panel-title">~ AGENT STATUS</div>
-            <div class="agent-grid">
-              <div class="agent-stat"><div class="agent-stat-label">STATUS</div><div class="agent-stat-value" id="a-status">STOPPED</div></div>
-              <div class="agent-stat"><div class="agent-stat-label">MODE</div><div class="agent-stat-value" id="a-mode">PAPER</div></div>
-              <div class="agent-stat"><div class="agent-stat-label">CYCLE #</div><div class="agent-stat-value" id="a-cycle">0</div></div>
-              <div class="agent-stat"><div class="agent-stat-label">UPTIME</div><div class="agent-stat-value" id="a-uptime">--</div></div>
-              <div class="agent-stat"><div class="agent-stat-label">CAPITAL</div><div class="agent-stat-value" id="a-capital">$500.00</div></div>
-              <div class="agent-stat"><div class="agent-stat-label">POSITIONS</div><div class="agent-stat-value" id="a-pos">0 / 3</div></div>
-            </div>
-            <div class="market-toggles">
-              <div class="market-toggle active poly" id="toggle-poly" onclick="toggleMarket('polymarket')">[*] POLYMARKET</div>
-              <div class="market-toggle active stocks" id="toggle-stocks" onclick="toggleMarket('stocks')">[^] STOCKS</div>
-              <div class="market-toggle active crypto" id="toggle-crypto" onclick="toggleMarket('crypto')">[$] CRYPTO</div>
-            </div>
-          </div>
-
-          <div style="display:flex;gap:10px;margin-bottom:10px;">
-            <div style="flex:1;background:var(--bg2);border:1px solid var(--border);padding:10px;">
-              <div style="color:var(--text3);font-size:10px;letter-spacing:1px;margin-bottom:6px;">RISK PARAMS</div>
-              <div style="display:flex;flex-direction:column;gap:4px;">
-                <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Stop loss global</span><span style="color:var(--red)">20%</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Min edge required</span><span style="color:var(--green)">15%</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Max positions</span><span style="color:var(--blue)">3</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Cycle interval</span><span style="color:var(--text)">90s</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Max capital</span><span style="color:var(--orange)">$500</span></div>
-              </div>
-            </div>
-            <div style="flex:1;background:var(--bg2);border:1px solid var(--border);padding:10px;">
-              <div style="color:var(--text3);font-size:10px;letter-spacing:1px;margin-bottom:6px;">LAST DECISION</div>
-              <div id="lastDecision" style="font-size:11px;color:var(--text2);line-height:1.6;">Waiting for agent cycle...</div>
-            </div>
-          </div>
-
-          <div style="display:flex;gap:10px;">
-            <button class="agent-btn btn-start" style="flex:1;padding:10px" onclick="startAgent()">>> START AGENT (24/7)</button>
-            <button class="agent-btn btn-stop" style="flex:1;padding:10px" onclick="stopAgent()">-- STOP AGENT</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- LIVE MARKETS PANEL -->
-      <div id="panel-markets" style="display:none">
-        <div class="panel-header">
-          <div class="panel-title">Live Markets</div>
-          <div class="panel-subtitle">Polymarket · Alpaca · Kraken</div>
-        </div>
-        <div class="panel-body">
-          <div class="tabs">
-            <div class="tab active" onclick="switchMarketTab('poly')" id="mtab-poly">[*] POLYMARKET</div>
-            <div class="tab" onclick="switchMarketTab('stocks')" id="mtab-stocks">[^] STOCKS</div>
-            <div class="tab" onclick="switchMarketTab('crypto')" id="mtab-crypto">[$] CRYPTO</div>
-          </div>
-          <div id="market-poly" style="padding-top:10px">
-            <table class="data-table">
-              <thead><tr><th>QUESTION</th><th>YES</th><th>NO</th><th>VOLUME</th><th>LIQ.</th></tr></thead>
-              <tbody id="poly-tbody"><tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">Loading Polymarket data...</td></tr></tbody>
-            </table>
-          </div>
-          <div id="market-stocks" style="display:none;padding-top:10px">
-            <table class="data-table">
-              <thead><tr><th>SYMBOL</th><th>ASK</th><th>BID</th><th>RSI</th><th>TREND</th></tr></thead>
-              <tbody id="stocks-tbody"><tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">Loading stocks data...</td></tr></tbody>
-            </table>
-          </div>
-          <div id="market-crypto" style="display:none;padding-top:10px">
-            <table class="data-table">
-              <thead><tr><th>PAIR</th><th>LAST</th><th>24H HIGH</th><th>24H LOW</th><th>VOL 24H</th><th>RSI</th></tr></thead>
-              <tbody id="crypto-tbody"><tr><td colspan="6" style="color:var(--text3);text-align:center;padding:20px">Loading crypto data...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- POSITIONS PANEL -->
-      <div id="panel-positions" style="display:none">
-        <div class="panel-header"><div class="panel-title">Positions</div><div class="panel-subtitle">Open trades across all markets</div></div>
-        <div class="panel-body">
-          <table class="data-table">
-            <thead><tr><th>ID</th><th>MARKET</th><th>SYMBOL</th><th>DIRECTION</th><th>SIZE</th><th>OPENED</th><th>MODE</th></tr></thead>
-            <tbody id="positions-tbody"><tr><td colspan="7" style="color:var(--text3);text-align:center;padding:20px">No open positions</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- SIM TRADES PANEL -->
-      <div id="panel-simtrades" style="display:none">
-        <div class="panel-header"><div class="panel-title">Sim Trades</div><div class="panel-subtitle">Paper trading history</div></div>
-        <div class="panel-body">
-          <table class="data-table">
-            <thead><tr><th>ID</th><th>SOURCE</th><th>SYMBOL</th><th>TYPE</th><th>SIZE</th><th>STATUS</th><th>TIME</th></tr></thead>
-            <tbody id="simtrades-tbody"><tr><td colspan="7" style="color:var(--text3);text-align:center;padding:20px">No sim trades yet</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- SUGGESTIONS PANEL -->
-      <div id="panel-suggestions" style="display:none">
-        <div class="panel-header"><div class="panel-title">Suggestions</div><div class="panel-subtitle">AI-generated trade ideas</div></div>
-        <div class="panel-body">
-          <div id="suggestions-list" style="display:flex;flex-direction:column;gap:8px;">
-            <div style="color:var(--text3);text-align:center;padding:20px">No suggestions yet. Start the agent to generate ideas.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- AI ANALYSIS PANEL -->
-      <div id="panel-analysis" style="display:none">
-        <div class="panel-header"><div class="panel-title">AI Analysis</div><div class="panel-subtitle">Ask KASS anything</div></div>
-        <div class="panel-body">
-          <div class="analysis-box" id="analysisBox">KASS&gt; Ready for analysis. Ask me about any market, position, or strategy.</div>
-          <div class="analysis-prompt">
-            <input class="analysis-input" id="analysisInput" placeholder="e.g. What's your view on BTC this cycle?" onkeydown="if(event.key==='Enter')runAnalysis()"/>
-            <button class="analysis-submit" onclick="runAnalysis()">ANALYZE</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ACTIVITY LOG PANEL -->
-      <div id="panel-activity" style="display:none">
-        <div class="panel-header"><div class="panel-title">Activity Log</div><div class="panel-subtitle">Real-time agent events</div></div>
-        <div class="panel-body" style="padding:0">
-          <div id="activityLog" style="font-family:var(--font-mono);">
-            <div class="log-entry"><div class="log-time">00:00:00</div><div class="log-type info">INFO</div><div class="log-msg">KASS Terminal v2.1.0 initialized</div></div>
-          </div>
-        </div>
-      </div>
-
-
-      <!-- PERFORMANCE PANEL -->
-      <div id="panel-performance" style="display:none">
-        <div class="panel-header"><div class="panel-title">Performance</div><div class="panel-subtitle">Trade history & results</div></div>
-        <div class="panel-body">
-          <div class="dash-grid" style="margin-bottom:12px">
-            <div class="metric-card"><div class="metric-label">TOTAL TRADES</div><div class="metric-value orange" id="p-total">--</div><div class="metric-sub">All time</div></div>
-            <div class="metric-card"><div class="metric-label">WIN RATE</div><div class="metric-value green" id="p-winrate">--</div><div class="metric-sub">Closed trades</div></div>
-            <div class="metric-card"><div class="metric-label">TOTAL P&amp;L</div><div class="metric-value" id="p-pnl">--</div><div class="metric-sub">Realized</div></div>
-            <div class="metric-card"><div class="metric-label">WINS</div><div class="metric-value green" id="p-wins">--</div><div class="metric-sub">Profitable</div></div>
-            <div class="metric-card"><div class="metric-label">LOSSES</div><div class="metric-value red" id="p-losses">--</div><div class="metric-sub">Unprofitable</div></div>
-            <div class="metric-card"><div class="metric-label">CYCLES</div><div class="metric-value" id="p-cycles">--</div><div class="metric-sub">Analysis ran</div></div>
-          </div>
-          <div style="color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:6px;font-weight:600">LAST AGENT DECISION</div>
-          <div id="p-lastAction" style="background:var(--bg2);border:1px solid var(--border);padding:10px;font-size:11px;color:var(--text2);margin-bottom:12px">--</div>
-          <div style="color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:6px;font-weight:600">TRADE HISTORY</div>
-          <table class="data-table">
-            <thead><tr><th>SYMBOL</th><th>SIDE</th><th>QTY</th><th>ENTRY</th><th>TARGET</th><th>EDGE</th><th>STATUS</th><th>TIME</th></tr></thead>
-            <tbody id="perf-tbody"><tr><td colspan="8" style="color:var(--text3);text-align:center;padding:20px">Loading trade history...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- NEWS & PROJECTIONS PANEL -->
-      <div id="panel-news" style="display:none">
-        <div class="panel-header"><div class="panel-title">News & Projections</div><div class="panel-subtitle">Real-time economic intel + AI analysis</div></div>
-        <div class="panel-body">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <div>
-              <div style="color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:8px;font-weight:600">AI PROJECTION -- KASS ANALYSIS</div>
-              <div id="newsProjection" style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--orange);padding:12px;font-size:11px;line-height:1.8;color:var(--text);min-height:120px">Loading analysis...</div>
-              <div style="color:var(--text3);font-size:10px;margin-top:4px" id="newsCacheTime">--</div>
-            </div>
-            <div>
-              <div style="color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:8px;font-weight:600">MARKET SENTIMENT</div>
-              <div style="background:var(--bg2);border:1px solid var(--border);padding:12px;">
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:11px;"><span style="color:var(--text3)">Global Markets</span><span id="sent-global" style="color:var(--text)">--</span></div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:11px;"><span style="color:var(--text3)">BTC</span><span id="sent-btc" style="color:var(--text)">--</span></div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:11px;"><span style="color:var(--text3)">ETH</span><span id="sent-eth" style="color:var(--text)">--</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">S&amp;P 500</span><span id="sent-spy" style="color:var(--text)">--</span></div>
-              </div>
-            </div>
-          </div>
-          <div style="color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:8px;font-weight:600">LATEST HEADLINES</div>
-          <div id="newsFeed" style="display:flex;flex-direction:column;gap:1px;background:var(--bg2);border:1px solid var(--border);">
-            <div style="padding:12px;color:var(--text3);text-align:center">Loading news...</div>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /content -->
-  </div><!-- /main -->
-
-  <!-- BOTTOM BAR -->
-  <div class="bottombar">
-    <div class="bb-item">KASS.AI <span>v2.1.0</span></div>
-    <div class="bb-item">BACKEND: <span id="backendStatus">CHECKING...</span></div>
-    <div class="bb-item">SUPABASE: <span id="dbStatus">--</span></div>
-    <div class="bb-agent" id="agentStatusBar">AGENT: STOPPED</div>
-    <div style="margin-left:auto">
-      <div class="bb-item">LAST UPDATE: <span id="lastUpdate">--</span></div>
+    <div style="background:var(--bg2);border:1px solid var(--border);padding:12px;">
+      <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:8px;font-weight:700;">LAST DECISION</div>
+      <div id="lastDecision" style="font-size:11px;color:var(--text2);line-height:1.7;">Waiting for agent cycle...</div>
     </div>
   </div>
+</div>
 
-</div><!-- /terminal -->
+<!-- LIVE MARKETS -->
+<div class="panel" id="panel-markets">
+  <div class="panel-header"><div class="panel-title">Live Markets</div><div class="panel-sub">Polymarket -- Alpaca -- Kraken -- Real-time</div></div>
+  <div class="panel-body" style="padding:0;">
+    <div class="tabs">
+      <div class="tab active" onclick="mTab('poly')" id="mt-poly">[*] POLYMARKET</div>
+      <div class="tab" onclick="mTab('stocks')" id="mt-stocks">[^] STOCKS</div>
+      <div class="tab" onclick="mTab('crypto')" id="mt-crypto">[$] CRYPTO</div>
+    </div>
+    <div style="padding:10px;">
+      <div id="mp-poly"><table class="data-table"><thead><tr><th>QUESTION</th><th>YES%</th><th>NO%</th><th>VOLUME</th><th>LIQUIDITY</th></tr></thead><tbody id="poly-tbody"><tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">Loading...</td></tr></tbody></table></div>
+      <div id="mp-stocks" style="display:none"><table class="data-table"><thead><tr><th>SYMBOL</th><th>ASK</th><th>BID</th><th>RSI</th><th>TREND</th></tr></thead><tbody id="stocks-tbody"><tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">Configure Alpaca API key for stock data</td></tr></tbody></table></div>
+      <div id="mp-crypto" style="display:none"><table class="data-table"><thead><tr><th>PAIR</th><th>LAST</th><th>24H HIGH</th><th>24H LOW</th><th>VOL</th><th>RSI</th></tr></thead><tbody id="crypto-tbody"><tr><td colspan="6" style="color:var(--text3);text-align:center;padding:20px">Loading crypto...</td></tr></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<!-- RISK ENGINE -->
+<div class="panel" id="panel-riskengine">
+  <div class="panel-header"><div class="panel-title">Risk Engine</div><div class="panel-sub">Institutional risk management -- 12 dimensions</div></div>
+  <div class="panel-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div class="risk-meter"><div class="rm-label">VALUE AT RISK (95%)</div><div class="rm-val c-red" id="re-var">--</div><div class="rm-bar"><div class="rm-fill" style="width:20%;"></div></div></div>
+      <div class="risk-meter"><div class="rm-label">MAX DRAWDOWN</div><div class="rm-val c-red" id="re-mdd">--</div><div class="rm-bar"><div class="rm-fill" style="width:10%;"></div></div></div>
+      <div class="risk-meter"><div class="rm-label">TOTAL P&amp;L</div><div class="rm-val c-green" id="re-pnl">$0.00</div><div class="rm-bar"><div class="rm-fill" style="width:0%;background:var(--green);"></div></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:14px;">
+        <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:10px;font-weight:700;">EXPOSURE BY ASSET CLASS</div>
+        <div class="exp-row"><span class="exp-name">Crypto</span><div class="exp-track"><div class="exp-fill" style="width:40%;background:var(--yellow);"></div></div><span class="exp-pct c-yellow">40%</span></div>
+        <div class="exp-row"><span class="exp-name">Stocks</span><div class="exp-track"><div class="exp-fill" style="width:35%;background:var(--blue);"></div></div><span class="exp-pct c-blue">35%</span></div>
+        <div class="exp-row"><span class="exp-name">Prediction</span><div class="exp-track"><div class="exp-fill" style="width:25%;background:var(--purple);"></div></div><span class="exp-pct c-purple">25%</span></div>
+        <div class="exp-row" style="border:none"><span class="exp-name">Cash</span><div class="exp-track"><div class="exp-fill" style="width:0%;background:var(--green);"></div></div><span class="exp-pct c-green" id="exp-cash">0%</span></div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:14px;">
+        <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:10px;font-weight:700;">RISK METRICS</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Sharpe Ratio</span><span id="rm-sharpe" class="up">--</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Sortino Ratio</span><span id="rm-sortino" class="up">--</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Calmar Ratio</span><span id="rm-calmar" class="c-blue">--</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Win Rate</span><span id="rm-winrate" class="up">--</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Avg Win</span><span id="rm-avgwin" class="up">--</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Avg Loss</span><span id="rm-avgloss" class="dn">--</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Total Trades</span><span id="rm-trades">--</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PERFORMANCE -->
+<div class="panel" id="panel-performance">
+  <div class="panel-header"><div class="panel-title">Performance</div><div class="panel-sub">Trade history and results</div></div>
+  <div class="panel-body">
+    <div class="dash-grid" style="margin-bottom:10px;">
+      <div class="metric-card"><div class="metric-label">TOTAL TRADES</div><div class="metric-value c-orange" id="p-total">--</div><div class="metric-sub">All time</div></div>
+      <div class="metric-card"><div class="metric-label">WIN RATE</div><div class="metric-value c-green" id="p-winrate">--</div><div class="metric-sub">Closed</div></div>
+      <div class="metric-card"><div class="metric-label">TOTAL P&amp;L</div><div class="metric-value" id="p-pnl">--</div><div class="metric-sub">Realized</div></div>
+      <div class="metric-card"><div class="metric-label">WINS</div><div class="metric-value c-green" id="p-wins">--</div><div class="metric-sub">Profitable</div></div>
+      <div class="metric-card"><div class="metric-label">LOSSES</div><div class="metric-value c-red" id="p-losses">--</div><div class="metric-sub">Unprofitable</div></div>
+      <div class="metric-card"><div class="metric-label">CYCLES RAN</div><div class="metric-value" id="p-cycles">--</div><div class="metric-sub">Analysis</div></div>
+    </div>
+    <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:5px;font-weight:700;">TRADE HISTORY</div>
+    <table class="data-table"><thead><tr><th>SYMBOL</th><th>SIDE</th><th>QTY</th><th>ENTRY</th><th>TARGET</th><th>EDGE</th><th>STATUS</th><th>TIME</th></tr></thead><tbody id="perf-tbody"><tr><td colspan="8" style="color:var(--text3);text-align:center;padding:20px">Loading trade history...</td></tr></tbody></table>
+  </div>
+</div>
+
+<!-- HEDGE FUND MODE -->
+<div class="panel" id="panel-hedgefund">
+  <div class="panel-header"><div class="panel-title">Hedge Fund Mode</div><div class="panel-sub">Institutional metrics -- Multi-strategy portfolio</div></div>
+  <div class="panel-body">
+    <div class="hf-metrics">
+      <div class="hfm"><span class="hfm-val up" id="hf-sharpe">--</span><span class="hfm-lbl">SHARPE</span></div>
+      <div class="hfm"><span class="hfm-val c-blue" id="hf-sortino">--</span><span class="hfm-lbl">SORTINO</span></div>
+      <div class="hfm"><span class="hfm-val c-purple" id="hf-calmar">--</span><span class="hfm-lbl">CALMAR</span></div>
+      <div class="hfm"><span class="hfm-val dn" id="hf-mdd">--</span><span class="hfm-lbl">MAX DRAWDOWN</span></div>
+      <div class="hfm"><span class="hfm-val c-yellow" id="hf-winrate">--</span><span class="hfm-lbl">WIN RATE</span></div>
+      <div class="hfm"><span class="hfm-val c-orange" id="hf-equity">$500</span><span class="hfm-lbl">EQUITY</span></div>
+    </div>
+    <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:8px;font-weight:700;">ACTIVE STRATEGIES</div>
+    <table class="strategy-table">
+      <thead><tr><th>STRATEGY NAME</th><th>STATUS</th><th>ALLOCATION</th><th>TRADES</th><th>MARKET</th></tr></thead>
+      <tbody id="hf-strategies"><tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">Start agent to activate strategies</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- POSITIONS -->
+<div class="panel" id="panel-positions">
+  <div class="panel-header"><div class="panel-title">Positions</div><div class="panel-sub">Open trades across all markets</div></div>
+  <div class="panel-body"><table class="data-table"><thead><tr><th>ID</th><th>MARKET</th><th>SYMBOL</th><th>DIRECTION</th><th>SIZE</th><th>OPENED</th><th>MODE</th></tr></thead><tbody id="positions-tbody"><tr><td colspan="7" style="color:var(--text3);text-align:center;padding:20px">No open positions</td></tr></tbody></table></div>
+</div>
+
+<!-- SIM TRADES -->
+<div class="panel" id="panel-simtrades">
+  <div class="panel-header"><div class="panel-title">Sim Trades</div><div class="panel-sub">Paper trading history</div></div>
+  <div class="panel-body"><table class="data-table"><thead><tr><th>ID</th><th>SOURCE</th><th>SYMBOL</th><th>TYPE</th><th>SIZE</th><th>STATUS</th><th>TIME</th></tr></thead><tbody id="simtrades-tbody"><tr><td colspan="7" style="color:var(--text3);text-align:center;padding:20px">No sim trades yet</td></tr></tbody></table></div>
+</div>
+
+<!-- SUGGESTIONS -->
+<div class="panel" id="panel-suggestions">
+  <div class="panel-header"><div class="panel-title">Suggestions</div><div class="panel-sub">AI-generated trade ideas</div></div>
+  <div class="panel-body"><div id="suggestions-list"><div style="color:var(--text3);text-align:center;padding:20px">No suggestions yet. Start the agent to generate ideas.</div></div></div>
+</div>
+
+<!-- DIARIO IA -->
+<div class="panel" id="panel-diary">
+  <div class="panel-header"><div class="panel-title">Diario IA</div><div class="panel-sub">Behavioral journal -- Bias detection -- Weekly improvement plan</div></div>
+  <div class="panel-body">
+    <div class="diary-grid">
+      <div style="background:var(--bg2);border:1px solid var(--border);">
+        <div class="score-ring">
+          <div class="score-num c-orange" id="diary-score">--</div>
+          <div class="score-lbl">TRADER SCORE</div>
+        </div>
+        <div style="padding:0 14px 14px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <div style="background:var(--bg3);padding:8px;text-align:center;"><div style="color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:2px;">DISCIPLINE</div><div class="c-blue" style="font-size:14px;font-weight:700;" id="diary-disc">--</div></div>
+            <div style="background:var(--bg3);padding:8px;text-align:center;"><div style="color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:2px;">EXECUTION</div><div class="up" style="font-size:14px;font-weight:700;" id="diary-exec">--</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div>
+          <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:6px;font-weight:700;">SESGOS DETECTADOS</div>
+          <div id="diary-biases"><div style="color:var(--text3);font-size:10px;">Analizando historial...</div></div>
+        </div>
+        <div>
+          <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:6px;font-weight:700;">INSIGHT SEMANAL</div>
+          <div class="insight-box" id="diary-insight">Cargando analisis conductual...</div>
+        </div>
+        <div>
+          <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:6px;font-weight:700;">RECOMENDACION</div>
+          <div style="background:rgba(153,102,255,0.06);border:1px solid rgba(153,102,255,0.2);padding:10px;font-size:11px;line-height:1.6;" id="diary-rec">--</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI ANALYSIS -->
+<div class="panel" id="panel-analysis">
+  <div class="panel-header"><div class="panel-title">AI Analysis</div><div class="panel-sub">Ask KASSANDRA anything about markets, risk or strategy</div></div>
+  <div class="panel-body">
+    <div class="analysis-box" id="analysisBox">KASSANDRA> Ready. Ask me about any market, position, strategy, risk scenario or macro outlook.</div>
+    <div class="analysis-prompt">
+      <input class="analysis-input" id="analysisInput" placeholder="e.g. What is the macro outlook for BTC this week?" onkeydown="if(event.key==='Enter')runAnalysis()"/>
+      <button class="analysis-submit" onclick="runAnalysis()">ANALYZE</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEWS -->
+<div class="panel" id="panel-news">
+  <div class="panel-header"><div class="panel-title">News and Projections</div><div class="panel-sub">Real-time economic intel + AI analysis + Market projections</div></div>
+  <div class="panel-body">
+    <div class="news-split">
+      <div>
+        <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:6px;font-weight:700;">LATEST HEADLINES</div>
+        <div id="newsFeed" style="background:var(--bg2);border:1px solid var(--border);max-height:500px;overflow-y:auto;"><div style="padding:16px;color:var(--text3);text-align:center;font-size:10px;">Loading news...</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div>
+          <div style="color:var(--orange);font-size:9px;letter-spacing:2px;margin-bottom:6px;font-weight:700;">KASS AI PROJECTION</div>
+          <div class="proj-box" id="newsProjection">Loading AI analysis...</div>
+          <div style="color:var(--text3);font-size:9px;margin-top:4px;" id="newsCacheTime">--</div>
+        </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);padding:10px;">
+          <div style="color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:8px;">MARKET SENTIMENT</div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">BTC</span><span id="sent-btc">--</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">ETH</span><span id="sent-eth">--</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">S&amp;P 500</span><span id="sent-spy">--</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACTIVITY LOG -->
+<div class="panel" id="panel-activity">
+  <div class="panel-header"><div class="panel-title">Activity Log</div><div class="panel-sub">Real-time agent events and decisions</div></div>
+  <div class="panel-body" style="padding:0;"><div id="activityLog"></div></div>
+</div>
+
+</div></div></div>
+
+<div class="bottombar">
+  <div class="bb-item">KASS.AI <span>v3.0</span></div>
+  <div class="bb-item">BACKEND: <span id="backendStatus" style="color:var(--text3)">CHECKING...</span></div>
+  <div class="bb-agent" id="agentBar" style="color:var(--text3)">AGENT: STOPPED</div>
+  <div class="bb-item">MARKETS: <span class="up">CRYPTO</span> <span class="c-blue">STOCKS</span> <span class="c-purple">POLY</span></div>
+  <div style="margin-left:auto"><div class="bb-item">LAST UPDATE: <span id="lastUpdate">--</span></div></div>
+</div>
+</div>
 
 <script>
-const API = 'https://kassai-backend-v2.onrender.com';
+const API='https://kassai-backend-v2.onrender.com';
+let state={mode:'paper',running:false,capital:500,startCapital:500,positions:[],cycle:0};
 
-// ─── State ────────────────────────────────────────────────────────────────────
-let state = {
-  mode: 'paper',
-  agentRunning: false,
-  capital: 500,
-  startCapital: 500,
-  positions: [],
-  tradeLog: [],
-  cycle: 0,
-  markets: { polymarket: true, stocks: true, crypto: true },
-  marketData: {}
-};
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toTimeString().slice(0,8)+' UTC';},1000);
 
-// ─── Clock ────────────────────────────────────────────────────────────────────
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent = now.toTimeString().slice(0,8) + ' UTC';
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-// ─── Nav ──────────────────────────────────────────────────────────────────────
-let currentPanel = 'dashboard';
-function showPanel(name) {
-  document.querySelectorAll('[id^="panel-"]').forEach(p => p.style.display = 'none');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('panel-' + name).style.display = 'flex';
-  document.getElementById('panel-' + name).style.flexDirection = 'column';
-  const nav = document.getElementById('nav-' + name);
-  if (nav) nav.classList.add('active');
-  currentPanel = name;
-  if (name === 'markets') loadMarkets();
-  if (name === 'positions') loadPositions();
-  if (name === 'activity') loadActivityLog();
-  if (name === 'suggestions') loadSuggestions();
+function nav(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const p=document.getElementById('panel-'+name);if(p)p.classList.add('active');
+  const n=document.getElementById('nav-'+name);if(n)n.classList.add('active');
+  if(name==='markets')loadMarkets();
+  if(name==='performance')loadPerformance();
+  if(name==='news')loadNews();
+  if(name==='diary')loadDiary();
+  if(name==='riskengine')loadRiskEngine();
+  if(name==='hedgefund')loadHedgeFund();
+  if(name==='positions')loadPositions();
+  if(name==='activity')loadActivityLog();
+  if(name==='suggestions')loadSuggestions();
 }
 
-// ─── Mode toggle ──────────────────────────────────────────────────────────────
-async function toggleMode() {
-  if (state.agentRunning) {
-    addLog('warn', 'Stop the agent before changing mode');
-    return;
-  }
-  state.mode = state.mode === 'paper' ? 'live' : 'paper';
-  updateModeUI();
-  try {
-    await fetch(`${API}/agent/mode`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: state.mode })
-    });
-    addLog('info', `Mode switched to ${state.mode.toUpperCase()}`);
-  } catch(e) {}
+async function toggleMode(){
+  if(state.running){addLog('warn','Stop agent before changing mode');return;}
+  state.mode=state.mode==='paper'?'live':'paper';
+  const b=document.getElementById('modeBadge');
+  b.className='mode-badge mode-'+state.mode;
+  b.textContent=state.mode==='paper'?'[P] PAPER':'[L] LIVE';
+  document.getElementById('a-mode').textContent=state.mode.toUpperCase();
+  try{await fetch(API+'/agent/mode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:state.mode})});}catch(e){}
+  addLog('info','Mode: '+state.mode.toUpperCase());
 }
 
-function updateModeUI() {
-  const badge = document.getElementById('modeBadge');
-  badge.className = 'mode-badge ' + state.mode;
-  badge.textContent = state.mode === 'paper' ? '[P] PAPER' : '[L] LIVE';
-  document.getElementById('a-mode').textContent = state.mode.toUpperCase();
+async function startAgent(){
+  try{
+    const res=await fetch(API+'/agent/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:state.mode,capital:500,markets:{polymarket:true,stocks:true,crypto:true}})});
+    const d=await res.json();
+    if(d.success){state.running=true;updateAgentUI();addLog('trade','Agent started | '+state.mode.toUpperCase()+' | Capital: $500');}
+    else addLog('error',d.error||'Failed to start');
+  }catch(e){addLog('error','Backend: '+e.message);}
 }
-
-// ─── Market toggles ───────────────────────────────────────────────────────────
-function toggleMarket(m) {
-  state.markets[m] = !state.markets[m];
-  const map = { polymarket: 'poly', stocks: 'stocks', crypto: 'crypto' };
-  const el = document.getElementById('toggle-' + map[m] || 'toggle-' + m);
-  if (el) {
-    if (state.markets[m]) el.classList.add('active');
-    else el.classList.remove('active');
+async function stopAgent(){
+  try{await fetch(API+'/agent/stop',{method:'POST'});}catch(e){}
+  state.running=false;updateAgentUI();addLog('warn','Agent stopped');
+}
+function updateAgentUI(){
+  const dot=document.getElementById('agentDot');
+  const bs=document.getElementById('btnStart');const bp=document.getElementById('btnStop');
+  const bar=document.getElementById('agentBar');
+  if(state.running){
+    dot.classList.add('running');bs.style.display='none';bp.style.display='block';
+    bar.textContent='AGENT: '+state.mode.toUpperCase()+' [RUNNING]';bar.style.color='var(--green)';
+    document.getElementById('a-status').textContent='[ RUNNING ]';
+    document.getElementById('a-status').style.color='var(--green)';
+  }else{
+    dot.classList.remove('running');bs.style.display='block';bp.style.display='none';
+    bar.textContent='AGENT: STOPPED';bar.style.color='var(--text3)';
+    document.getElementById('a-status').textContent='STOPPED';
+    document.getElementById('a-status').style.color='var(--text2)';
   }
 }
 
-// ─── Agent control ────────────────────────────────────────────────────────────
-async function startAgent() {
-  try {
-    addLog('info', `Starting KASS agent in ${state.mode.toUpperCase()} mode...`);
-    const res = await fetch(`${API}/agent/start`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: state.mode, capital: 500, markets: state.markets })
-    });
-    const data = await res.json();
-    if (data.success) {
-      state.agentRunning = true;
-      updateAgentUI();
-      addLog('trade', `Agent started | Mode: ${state.mode.toUpperCase()} | Capital: $500`);
-    } else {
-      addLog('error', data.error || 'Failed to start agent');
-    }
-  } catch(e) {
-    addLog('error', 'Backend unreachable: ' + e.message);
-  }
-}
-
-async function stopAgent() {
-  try {
-    const res = await fetch(`${API}/agent/stop`, { method: 'POST' });
-    const data = await res.json();
-    state.agentRunning = false;
+async function pollStatus(){
+  try{
+    const r=await fetch(API+'/agent/status');const d=await r.json();
+    state.running=d.running;state.cycle=d.cycleCount||0;
+    state.positions=d.positions||[];state.capital=d.currentCapital||state.capital;
+    const els={tbCycle:state.cycle,tbPos:state.positions.length,m_cycle:state.cycle,m_positions:state.positions.length,a_cycle:state.cycle,a_capital:'$'+state.capital.toFixed(0)};
+    Object.entries(els).forEach(([k,v])=>{const el=document.getElementById(k.replace('_','-'));if(el)el.textContent=v;});
+    document.getElementById('capVal').textContent='$'+state.capital.toFixed(2);
+    document.getElementById('m-capital').textContent='$'+state.capital.toFixed(2);
+    const pnl=state.capital-state.startCapital;
+    const pct=(pnl/state.startCapital*100).toFixed(2);
+    const cpEl=document.getElementById('capPnl');
+    cpEl.textContent=(pnl>=0?'+':'')+'\$'+pnl.toFixed(2)+' ('+pct+'%)';
+    cpEl.className='cap-pnl '+(pnl>=0?'cap-pos':'cap-neg');
+    const mpEl=document.getElementById('m-pnl');
+    mpEl.textContent=(pnl>=0?'+':'')+'\$'+pnl.toFixed(2);
+    mpEl.className='metric-value '+(pnl>=0?'c-green':'c-red');
+    if(d.lastAction)document.getElementById('lastDecision').textContent=d.lastAction;
     updateAgentUI();
-    addLog('warn', 'Agent stopped');
-  } catch(e) {
-    addLog('error', 'Stop error: ' + e.message);
+    document.getElementById('backendStatus').textContent='[ ONLINE ]';
+    document.getElementById('backendStatus').style.color='var(--green)';
+    document.getElementById('lastUpdate').textContent=new Date().toTimeString().slice(0,8);
+  }catch(e){
+    document.getElementById('backendStatus').textContent='[ OFFLINE ]';
+    document.getElementById('backendStatus').style.color='var(--red)';
   }
 }
 
-function updateAgentUI() {
-  const dot = document.getElementById('agentDot');
-  const btnStart = document.getElementById('btnStart');
-  const btnStop = document.getElementById('btnStop');
-  const bar = document.getElementById('agentStatusBar');
-  const aStatus = document.getElementById('a-status');
-
-  if (state.agentRunning) {
-    dot.classList.add('running');
-    btnStart.style.display = 'none';
-    btnStop.style.display = 'block';
-    bar.textContent = `AGENT: ${state.mode.toUpperCase()} ● RUNNING`;
-    bar.style.color = 'var(--green)';
-    if (aStatus) aStatus.textContent = '● RUNNING';
-  } else {
-    dot.classList.remove('running');
-    btnStart.style.display = 'block';
-    btnStop.style.display = 'none';
-    bar.textContent = 'AGENT: STOPPED';
-    bar.style.color = 'var(--text3)';
-    if (aStatus) aStatus.textContent = 'STOPPED';
-  }
-}
-
-// ─── Status polling ───────────────────────────────────────────────────────────
-async function pollStatus() {
-  try {
-    const res = await fetch(`${API}/agent/status`);
-    const data = await res.json();
-    if (!data.success) return;
-
-    state.agentRunning = data.running;
-    state.cycle = data.cycleCount || 0;
-    state.positions = data.positions || [];
-    state.capital = data.currentCapital || state.capital;
-
-    // Update UI
-    document.getElementById('cycleCount').textContent = state.cycle;
-    document.getElementById('posCount').textContent = state.positions.length;
-    document.getElementById('m-cycle').textContent = state.cycle;
-    document.getElementById('m-positions').textContent = state.positions.length;
-    document.getElementById('a-cycle').textContent = state.cycle;
-    document.getElementById('a-pos').textContent = `${state.positions.length} / 3`;
-    document.getElementById('capitalValue').textContent = '$' + state.capital.toFixed(2);
-    document.getElementById('m-capital').textContent = '$' + state.capital.toFixed(2);
-    document.getElementById('a-capital').textContent = '$' + state.capital.toFixed(2);
-
-    const pnl = state.capital - state.startCapital;
-    const pnlPct = (pnl / state.startCapital * 100).toFixed(2);
-    const pnlEl = document.getElementById('capitalPnl');
-    pnlEl.textContent = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2) + ' (' + pnlPct + '%)';
-    pnlEl.className = 'cap-pnl ' + (pnl >= 0 ? 'positive' : 'negative');
-    document.getElementById('m-pnl').textContent = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2);
-
-    if (data.uptime) {
-      const h = Math.floor(data.uptime / 3600);
-      const m = Math.floor((data.uptime % 3600) / 60);
-      const s = data.uptime % 60;
-      const upStr = `${h}h ${m}m ${s}s`;
-      document.getElementById('m-uptime').textContent = upStr;
-      document.getElementById('a-uptime').textContent = upStr;
+async function loadPublicMarkets(){
+  try{
+    const r=await fetch(API+'/markets/public');const d=await r.json();
+    if(d.crypto&&d.crypto.length){
+      const btc=d.crypto.find(c=>c.pair.includes('XBT')||c.pair.includes('BTC'));
+      const eth=d.crypto.find(c=>c.pair.includes('ETH')&&!c.pair.includes('XBT'));
+      const sol=d.crypto.find(c=>c.pair.includes('SOL'));
+      const ada=d.crypto.find(c=>c.pair.includes('ADA'));
+      if(btc){['t-btc','sent-btc'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent='$'+Number(btc.last).toLocaleString();el.className=(el.id==='t-btc'?'ticker-price ':'')+'up';}});}
+      if(eth){['t-eth','sent-eth'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent='$'+Number(eth.last).toLocaleString();el.className=(el.id==='t-eth'?'ticker-price ':'')+'up';}});}
+      if(sol){const el=document.getElementById('t-sol');if(el){el.textContent='$'+Number(sol.last).toFixed(2);el.className='ticker-price up';}}
+      if(ada){const el=document.getElementById('t-ada');if(el){el.textContent='$'+Number(ada.last).toFixed(4);el.className='ticker-price up';}}
     }
-
-    updateAgentUI();
-    document.getElementById('lastUpdate').textContent = new Date().toTimeString().slice(0,8);
-    document.getElementById('backendStatus').textContent = '● ONLINE';
-    document.getElementById('backendStatus').style.color = 'var(--green)';
-
-  } catch(e) {
-    document.getElementById('backendStatus').textContent = '● OFFLINE';
-    document.getElementById('backendStatus').style.color = 'var(--red)';
-  }
+  }catch(e){}
 }
 
-// ─── Market data ──────────────────────────────────────────────────────────────
-async function loadPublicMarkets() {
-  try {
-    const res = await fetch(`${API}/markets/public`);
-    const data = await res.json();
-    // Update crypto ticker
-    if (data.crypto && data.crypto.length) {
-      const btc = data.crypto.find(c => c.pair.includes('XBT') || c.pair.includes('BTC'));
-      const eth = data.crypto.find(c => c.pair.includes('ETH'));
-      const sol = data.crypto.find(c => c.pair.includes('SOL'));
-      const ada = data.crypto.find(c => c.pair.includes('ADA'));
-      if (btc) { document.getElementById('t-btc').textContent = '$' + Number(btc.last).toLocaleString(); document.getElementById('t-btc').className = 'ticker-price up'; }
-      if (eth) { document.getElementById('t-eth').textContent = '$' + Number(eth.last).toLocaleString(); document.getElementById('t-eth').className = 'ticker-price up'; }
-      if (sol) { document.getElementById('t-sol').textContent = '$' + Number(sol.last).toFixed(2); document.getElementById('t-sol').className = 'ticker-price up'; }
+async function sendCopilot(){
+  const inp=document.getElementById('chatInput');
+  const msg=inp.value.trim();if(!msg)return;
+  const msgs=document.getElementById('chatMessages');
+  msgs.innerHTML+=`<div class="chat-msg chat-user"><div class="chat-label chat-label-user">TRADER //</div>${msg}</div>`;
+  msgs.innerHTML+=`<div class="chat-msg chat-kass" id="kass-typing"><div class="chat-label chat-label-kass">KASSANDRA //</div>Analizando... aguarda.</div>`;
+  msgs.scrollTop=msgs.scrollHeight;inp.value='';
+  document.getElementById('copilotVerdict').textContent='ANALIZANDO...';
+  document.getElementById('copilotVerdict').className='verdict-val v-neutral';
+  try{
+    const r=await fetch(API+'/agent/copilot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({context:msg})});
+    const d=await r.json();const a=d.analysis||{};
+    const te=document.getElementById('kass-typing');
+    if(te)te.innerHTML=`<div class="chat-label chat-label-kass">KASSANDRA //</div>${a.explanation||a.macro_context||'Analisis completado.'}<br/><br/><span style="color:var(--text3)">Veredicto: <strong style="color:${a.verdict==='FAVORABLE'?'var(--green)':a.verdict==='DESFAVORABLE'?'var(--red)':'var(--yellow)'}">${a.verdict||'--'}</strong> | Conf: ${a.confidence||'--'}% | R/R: ${a.risk_reward||'--'}</span>`;
+    const ve=document.getElementById('copilotVerdict');
+    ve.textContent=a.verdict||'NEUTRAL';
+    ve.className='verdict-val '+(a.verdict==='FAVORABLE'?'v-favorable':a.verdict==='DESFAVORABLE'?'v-desfavorable':'v-neutral');
+    document.getElementById('copilotConf').textContent='Confianza: '+(a.confidence||'--')+'%';
+    document.getElementById('cSetup').textContent=(a.setup_quality||'--')+'/100';
+    document.getElementById('cRR').textContent=a.risk_reward||'--';
+    document.getElementById('cConf').textContent=(a.confidence||'--')+'%';
+    document.getElementById('cRegime').textContent=a.regime||'--';
+    document.getElementById('cSize').textContent=a.suggested_size||'--';
+    const rtEl=document.getElementById('cRisks');
+    if(a.key_risks&&a.key_risks.length)rtEl.innerHTML=a.key_risks.map(r=>`<div class="risk-tag">${r}</div>`).join('');
+  }catch(e){const te=document.getElementById('kass-typing');if(te)te.innerHTML='<div class="chat-label chat-label-kass">KASSANDRA //</div>Error: '+e.message;}
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+async function loadRiskEngine(){
+  try{
+    const r=await fetch(API+'/agent/risk-metrics');const d=await r.json();
+    if(!d.success)return;
+    document.getElementById('re-var').textContent=d.var95||'--';
+    document.getElementById('re-mdd').textContent=d.maxDrawdown||'--';
+    document.getElementById('re-pnl').textContent=d.totalPnl||'$0.00';
+    document.getElementById('rm-sharpe').textContent=d.sharpe||'--';
+    document.getElementById('rm-sortino').textContent=d.sortino||'--';
+    document.getElementById('rm-calmar').textContent=d.calmar||'--';
+    document.getElementById('rm-winrate').textContent=d.winRate||'--';
+    document.getElementById('rm-avgwin').textContent=d.avgWin||'--';
+    document.getElementById('rm-avgloss').textContent=d.avgLoss||'--';
+    document.getElementById('rm-trades').textContent=d.totalTrades||'0';
+    document.getElementById('tbSharpe').textContent=d.sharpe||'--';
+    document.getElementById('m-sharpe').textContent=d.sharpe||'--';
+    document.getElementById('m-winrate').textContent=d.winRate||'--';
+    document.getElementById('tbWin').textContent=d.winRate||'--';
+  }catch(e){}
+}
+
+async function loadHedgeFund(){
+  try{
+    const r=await fetch(API+'/agent/hedge-fund');const d=await r.json();
+    if(!d.success)return;const p=d.portfolio||{};
+    ['hf-sharpe','sharpe','hf-sortino','sortino','hf-calmar','calmar','hf-mdd','maxDrawdown','hf-winrate','winRate','hf-equity','equity'].forEach((k,i,a)=>{if(i%2===0){const el=document.getElementById(a[i]);if(el)el.textContent=p[a[i+1]]||'--';}});
+    const tb=document.getElementById('hf-strategies');
+    const strats=d.strategies||[];
+    tb.innerHTML=strats.length?strats.map(s=>`<tr><td class="c-orange" style="font-weight:600">${s.name}</td><td><span class="strat-active">${s.status}</span></td><td>${s.allocation}</td><td>${s.trades}</td><td style="color:var(--text2)">${s.name.includes('CRYPTO')?'[$] Crypto':s.name.includes('STOCK')?'[^] Stocks':'[*] Prediction'}</td></tr>`).join(''):'<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">Start agent to activate strategies</td></tr>';
+  }catch(e){}
+}
+
+async function loadPerformance(){
+  try{
+    const r=await fetch(API+'/agent/performance');const d=await r.json();
+    if(!d.success)return;
+    document.getElementById('p-total').textContent=d.totalTrades;
+    document.getElementById('p-winrate').textContent=d.winRate?d.winRate+'%':'--';
+    const pnl=parseFloat(d.totalPnl);
+    const pe=document.getElementById('p-pnl');
+    pe.textContent=(pnl>=0?'+':'')+'\$'+pnl.toFixed(2);
+    pe.className='metric-value '+(pnl>=0?'c-green':'c-red');
+    document.getElementById('p-wins').textContent=d.wins;
+    document.getElementById('p-losses').textContent=d.losses;
+    document.getElementById('p-cycles').textContent=d.cycles;
+    const tb=document.getElementById('perf-tbody');
+    tb.innerHTML=d.recentTrades&&d.recentTrades.length?d.recentTrades.map(t=>`<tr><td class="c-orange">${t.symbol||'--'}</td><td><span class="badge badge-${t.side||'buy'}">${(t.side||'buy').toUpperCase()}</span></td><td>${t.qty||'--'}</td><td>\$${t.entry_price?parseFloat(t.entry_price).toFixed(2):'--'}</td><td>\$${t.target_price?parseFloat(t.target_price).toFixed(2):'--'}</td><td class="up">${t.edge?(t.edge*100).toFixed(0)+'%':'--'}</td><td><span class="badge ${t.status==='open'?'badge-open':'badge-paper'}">${(t.status||'open').toUpperCase()}</span></td><td style="color:var(--text3);font-size:10px">${t.created_at?new Date(t.created_at).toLocaleString():'--'}</td></tr>`).join(''):'<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:20px">No trades yet. Start the agent.</td></tr>';
+  }catch(e){}
+}
+
+async function loadDiary(){
+  document.getElementById('diary-insight').textContent='Generando analisis conductual...';
+  try{
+    const r=await fetch(API+'/agent/diary');const d=await r.json();
+    if(!d.success)return;const di=d.diary||{};
+    const sc=di.overall_score||70;
+    const se=document.getElementById('diary-score');
+    se.textContent=sc;se.style.color=sc>=80?'var(--green)':sc>=60?'var(--orange)':'var(--red)';
+    document.getElementById('diary-disc').textContent=(di.discipline_score||'--')+(di.discipline_score?'/100':'');
+    document.getElementById('diary-exec').textContent='72/100';
+    const biases=di.biases_detected||[];
+    document.getElementById('diary-biases').innerHTML=biases.length?biases.map(b=>`<div class="bias-item"><div class="bias-icon">!</div><div style="font-size:11px;">${b}</div></div>`).join(''):'<div style="color:var(--text3);font-size:10px">No biases detected</div>';
+    document.getElementById('diary-insight').textContent=di.weekly_insight||'--';
+    document.getElementById('diary-rec').textContent=di.recommendation||'--';
+  }catch(e){document.getElementById('diary-insight').textContent='Error loading diary.';}
+}
+
+async function loadMarkets(){
+  try{
+    const r=await fetch(API+'/agent/markets');const d=await r.json();
+    const poly=Array.isArray(d.polymarket)?d.polymarket:[];
+    document.getElementById('poly-tbody').innerHTML=poly.length?poly.map(m=>`<tr><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.question||'--'}</td><td class="up">${m.yesPrice?(m.yesPrice*100).toFixed(1)+'%':'--'}</td><td class="dn">${m.noPrice?(m.noPrice*100).toFixed(1)+'%':'--'}</td><td>\$${m.volume?(m.volume/1000).toFixed(1)+'K':'--'}</td><td>\$${m.liquidity?(m.liquidity/1000).toFixed(1)+'K':'--'}</td></tr>`).join(''):'<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">No data</td></tr>';
+    const crypto=Array.isArray(d.crypto)?d.crypto:[];
+    document.getElementById('crypto-tbody').innerHTML=crypto.length?crypto.map(c=>`<tr><td class="c-yellow">${c.pair}</td><td>\$${c.last?Number(c.last).toLocaleString():'--'}</td><td class="up">\$${c.high24h?Number(c.high24h).toLocaleString():'--'}</td><td class="dn">\$${c.low24h?Number(c.low24h).toLocaleString():'--'}</td><td>${c.volume24h?c.volume24h.toFixed(1):'--'}</td><td style="color:${c.rsi>70?'var(--red)':c.rsi<30?'var(--green)':'var(--text)'}">${c.rsi||'--'}</td></tr>`).join(''):'<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:20px">No crypto data</td></tr>';
+  }catch(e){}
+}
+function mTab(t){
+  ['poly','stocks','crypto'].forEach(x=>{document.getElementById('mp-'+x).style.display=x===t?'block':'none';document.getElementById('mt-'+x).classList.toggle('active',x===t);});
+}
+
+async function loadPositions(){
+  try{
+    const r=await fetch(API+'/agent/positions');const d=await r.json();
+    const all=[...(d.agent||[]),...(d.alpaca||[])];
+    document.getElementById('positions-tbody').innerHTML=all.length?all.map(p=>`<tr><td style="color:var(--text3);font-size:10px">${(p.id||'--').slice(0,14)}</td><td>${p.source||p.market||'--'}</td><td class="c-orange">${p.symbol||p.pair||'--'}</td><td><span class="badge badge-${p.direction||p.side||'buy'}">${(p.direction||p.side||'buy').toUpperCase()}</span></td><td>\$${(p.size||p.marketValue||0).toFixed(2)}</td><td style="color:var(--text3);font-size:10px">${p.openedAt?new Date(p.openedAt).toTimeString().slice(0,8):'--'}</td><td><span class="badge badge-${p.mode||'paper'}">${(p.mode||'paper').toUpperCase()}</span></td></tr>`).join(''):'<tr><td colspan="7" style="color:var(--text3);text-align:center;padding:20px">No open positions</td></tr>';
+  }catch(e){}
+}
+
+async function loadSuggestions(){
+  try{
+    const r=await fetch(API+'/agent/suggestions');const d=await r.json();
+    const c=document.getElementById('suggestions-list');
+    if(d.suggestions&&d.suggestions.length){c.innerHTML=d.suggestions.map(s=>`<div style="background:var(--bg2);border:1px solid var(--border);padding:10px;margin-bottom:8px;"><div style="color:var(--orange);font-size:9px;margin-bottom:4px">${s.created_at?new Date(s.created_at).toLocaleString():'--'}</div><div style="font-size:11px;line-height:1.6">${s.data||JSON.stringify(s)}</div></div>`).join('');}
+  }catch(e){}
+}
+
+async function loadNews(){
+  try{
+    await fetch(API+'/health').catch(()=>{});
+    await new Promise(r=>setTimeout(r,1000));
+    const r=await fetch(API+'/news');const d=await r.json();
+    if(d.projections)document.getElementById('newsProjection').textContent=d.projections;
+    if(d.cachedAt)document.getElementById('newsCacheTime').textContent='Updated: '+new Date(d.cachedAt).toLocaleTimeString();
+    if(d.news&&d.news.length){
+      document.getElementById('newsFeed').innerHTML=d.news.map((n,i)=>`<div class="news-hl"><span class="news-time">${new Date(n.pubDate).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span><span class="news-src">${n.source.split(' ')[0]}</span><span class="news-title">${n.title}</span></div>`).join('');
     }
-    // Update sentiment
-    if (data.crypto && data.crypto.length) {
-      const btc = data.crypto.find(c => c.pair.includes('XBT') || c.pair.includes('BTC'));
-      const eth = data.crypto.find(c => c.pair.includes('ETH'));
-      if (btc) document.getElementById('sent-btc').textContent = '$' + Number(btc.last).toLocaleString();
-      if (eth) document.getElementById('sent-eth').textContent = '$' + Number(eth.last).toLocaleString();
-    }
-    return data;
-  } catch(e) { console.error('Public markets error:', e); return {}; }
+  }catch(e){}
 }
 
-async function loadMarkets() {
-  try {
-    const res = await fetch(`${API}/agent/markets`);
-    const data = await res.json();
-
-    // Polymarket
-    const polyData = Array.isArray(data.polymarket) ? data.polymarket : [];
-    const polyBody = document.getElementById('poly-tbody');
-    polyBody.innerHTML = polyData.length
-      ? polyData.map(m => `
-        <tr>
-          <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.question || '--'}</td>
-          <td class="up">${m.yesPrice ? (m.yesPrice * 100).toFixed(1) + '%' : '--'}</td>
-          <td class="down">${m.noPrice ? (m.noPrice * 100).toFixed(1) + '%' : '--'}</td>
-          <td>$${m.volume ? (m.volume / 1000).toFixed(1) + 'K' : '--'}</td>
-          <td>$${m.liquidity ? (m.liquidity / 1000).toFixed(1) + 'K' : '--'}</td>
-        </tr>`).join('')
-      : '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">No Polymarket data available</td></tr>';
-
-    // Stocks
-    const stocksData = Array.isArray(data.stocks) ? data.stocks : [];
-    const stocksBody = document.getElementById('stocks-tbody');
-    stocksBody.innerHTML = stocksData.length
-      ? stocksData.map(s => `
-        <tr>
-          <td style="color:var(--orange);font-weight:600">${s.symbol}</td>
-          <td class="up">$${s.askPrice ? s.askPrice.toFixed(2) : '--'}</td>
-          <td>$${s.bidPrice ? s.bidPrice.toFixed(2) : '--'}</td>
-          <td style="color:${s.rsi > 70 ? 'var(--red)' : s.rsi < 30 ? 'var(--green)' : 'var(--text)'}">${s.rsi ? s.rsi.toFixed(1) : '--'}</td>
-          <td><span class="badge ${s.trend === 'above_sma' ? 'buy' : 'sell'}">${s.trend || '--'}</span></td>
-        </tr>`).join('')
-      : '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">Alpaca API key required for stock data</td></tr>';
-
-    // Crypto
-    const cryptoData = Array.isArray(data.crypto) ? data.crypto : (Array.isArray(data) ? data : []);
-    const cryptoBody = document.getElementById('crypto-tbody');
-    cryptoBody.innerHTML = cryptoData.length
-      ? cryptoData.map(c => `
-        <tr>
-          <td style="color:var(--yellow);font-weight:600">${c.pair}</td>
-          <td>$${c.last ? c.last.toLocaleString() : '--'}</td>
-          <td class="up">$${c.high24h ? c.high24h.toLocaleString() : '--'}</td>
-          <td class="down">$${c.low24h ? c.low24h.toLocaleString() : '--'}</td>
-          <td>${c.volume24h ? c.volume24h.toFixed(1) : '--'}</td>
-          <td style="color:${c.rsi > 70 ? 'var(--red)' : c.rsi < 30 ? 'var(--green)' : 'var(--text)'}">${c.rsi || '--'}</td>
-        </tr>`).join('')
-      : '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:20px">No crypto data available</td></tr>';
-
-    // Update ticker
-    if (cryptoData.length) {
-      const btc = cryptoData.find(c => c.pair.includes('XBT') || c.pair.includes('BTC'));
-      const eth = cryptoData.find(c => c.pair.includes('ETH'));
-      const sol = cryptoData.find(c => c.pair.includes('SOL'));
-      if (btc) { document.getElementById('t-btc').textContent = '$' + btc.last.toLocaleString(); }
-      if (eth) { document.getElementById('t-eth').textContent = '$' + eth.last.toLocaleString(); }
-      if (sol) { document.getElementById('t-sol').textContent = '$' + sol.last.toFixed(2); }
-    }
-
-  } catch(e) {
-    console.error('Markets load error:', e);
-  }
-}
-
-function switchMarketTab(tab) {
-  ['poly', 'stocks', 'crypto'].forEach(t => {
-    document.getElementById('market-' + t).style.display = t === tab ? 'block' : 'none';
-    document.getElementById('mtab-' + t).classList.toggle('active', t === tab);
-  });
-}
-
-// ─── Positions ────────────────────────────────────────────────────────────────
-async function loadPositions() {
-  try {
-    const res = await fetch(`${API}/agent/positions`);
-    const data = await res.json();
-    const all = [...(data.agent || []), ...(data.alpaca || [])];
-    const tbody = document.getElementById('positions-tbody');
-    tbody.innerHTML = all.length
-      ? all.map(p => `
-        <tr>
-          <td style="color:var(--text3);font-size:10px">${(p.id || '--').slice(0, 16)}</td>
-          <td>${p.source || p.market || '--'}</td>
-          <td style="color:var(--orange)">${p.symbol || p.pair || '--'}</td>
-          <td><span class="badge ${p.direction || p.side || p.type}">${p.direction || p.side || p.type || '--'}</span></td>
-          <td>$${(p.size || p.marketValue || 0).toFixed(2)}</td>
-          <td style="color:var(--text3);font-size:10px">${p.openedAt ? new Date(p.openedAt).toTimeString().slice(0,8) : '--'}</td>
-          <td><span class="badge ${p.mode || 'paper'}">${(p.mode || 'paper').toUpperCase()}</span></td>
-        </tr>`).join('')
-      : '<tr><td colspan="7" style="color:var(--text3);text-align:center;padding:20px">No open positions</td></tr>';
-  } catch(e) {}
-}
-
-// ─── Activity log ─────────────────────────────────────────────────────────────
-async function loadActivityLog() {
-  try {
-    const res = await fetch(`${API}/agent/log`);
-    const data = await res.json();
-    if (data.logs) {
-      const container = document.getElementById('activityLog');
-      container.innerHTML = data.logs.map(l => {
-        const t = new Date(l.created_at).toTimeString().slice(0,8);
-        const type = l.type || 'info';
-        const typeClass = type.includes('error') ? 'error' : type.includes('trade') ? 'trade' : type.includes('warn') || type.includes('stop') ? 'warn' : 'info';
-        return `<div class="log-entry"><div class="log-time">${t}</div><div class="log-type ${typeClass}">${type.toUpperCase().slice(0,5)}</div><div class="log-msg">${JSON.stringify(l.data).slice(0,120)}</div></div>`;
+async function loadActivityLog(){
+  try{
+    const r=await fetch(API+'/agent/log');const d=await r.json();
+    if(d.logs){
+      document.getElementById('activityLog').innerHTML=d.logs.map(l=>{
+        const t=new Date(l.created_at).toTimeString().slice(0,8);
+        const tp=l.type||'info';
+        const cls=tp.includes('error')?'lt-error':tp.includes('trade')?'lt-trade':tp.includes('warn')||tp.includes('stop')?'lt-warn':tp.includes('decision')?'lt-kass':'lt-info';
+        return `<div class="log-entry"><div class="log-time">${t}</div><div class="log-type ${cls}">${tp.slice(0,5).toUpperCase()}</div><div class="log-msg">${JSON.stringify(l.data).slice(0,140)}</div></div>`;
       }).join('');
     }
-  } catch(e) {}
+  }catch(e){}
 }
 
-// ─── Suggestions ─────────────────────────────────────────────────────────────
-async function loadSuggestions() {
-  try {
-    const res = await fetch(`${API}/agent/suggestions`);
-    const data = await res.json();
-    const container = document.getElementById('suggestions-list');
-    if (data.suggestions && data.suggestions.length) {
-      container.innerHTML = data.suggestions.map(s => `
-        <div style="background:var(--bg2);border:1px solid var(--border);padding:10px;">
-          <div style="color:var(--orange);font-size:10px;margin-bottom:4px">${s.created_at ? new Date(s.created_at).toLocaleString() : '--'}</div>
-          <div style="font-size:11px;line-height:1.6">${s.data || s.suggestion || JSON.stringify(s)}</div>
-        </div>`).join('');
-    }
-  } catch(e) {}
+async function runAnalysis(){
+  const inp=document.getElementById('analysisInput');
+  const box=document.getElementById('analysisBox');
+  const p=inp.value.trim();if(!p)return;
+  box.textContent='KASSANDRA> Analyzing...';inp.value='';
+  try{
+    const r=await fetch(API+'/agent/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({context:p,mode:state.mode})});
+    const d=await r.json();
+    box.textContent='KASSANDRA> '+(d.analysis||'No response');
+  }catch(e){box.textContent='KASSANDRA> Error: '+e.message;}
 }
 
-// ─── AI Analysis ─────────────────────────────────────────────────────────────
-async function runAnalysis() {
-  const input = document.getElementById('analysisInput');
-  const box = document.getElementById('analysisBox');
-  const prompt = input.value.trim();
-  if (!prompt) return;
-
-  box.textContent = 'KASS> Analyzing...';
-  input.value = '';
-
-  try {
-    const res = await fetch(`${API}/agent/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ context: prompt, mode: state.mode })
-    });
-    const data = await res.json();
-    box.textContent = `KASS> ${data.analysis || 'No response'}`;
-  } catch(e) {
-    box.textContent = `KASS> Error: ${e.message}`;
-  }
+function addLog(type,msg){
+  const t=new Date().toTimeString().slice(0,8);
+  const cls=type==='trade'?'lt-trade':type==='warn'?'lt-warn':type==='error'?'lt-error':type==='kass'?'lt-kass':'lt-info';
+  const e=`<div class="log-entry"><div class="log-time">${t}</div><div class="log-type ${cls}">${type.toUpperCase().slice(0,5)}</div><div class="log-msg">${msg}</div></div>`;
+  const dl=document.getElementById('dashLog');const al=document.getElementById('activityLog');
+  if(dl)dl.insertAdjacentHTML('afterbegin',e);
+  if(al)al.insertAdjacentHTML('afterbegin',e);
 }
 
-// ─── Log helper ───────────────────────────────────────────────────────────────
-function addLog(type, msg) {
-  const t = new Date().toTimeString().slice(0,8);
-  const typeMap = { info: 'info', trade: 'trade', warn: 'warn', error: 'error' };
-  const cls = typeMap[type] || 'info';
-  const entry = `<div class="log-entry"><div class="log-time">${t}</div><div class="log-type ${cls}">${type.toUpperCase()}</div><div class="log-msg">${msg}</div></div>`;
-
-  const dashLog = document.getElementById('dashLog');
-  const actLog = document.getElementById('activityLog');
-  if (dashLog) dashLog.insertAdjacentHTML('afterbegin', entry);
-  if (actLog) actLog.insertAdjacentHTML('afterbegin', entry);
-}
-
-// ─── Performance ─────────────────────────────────────────────────────────────
-async function loadPerformance() {
-  try {
-    const res = await fetch(`${API}/agent/performance`);
-    const data = await res.json();
-    if (!data.success) return;
-    document.getElementById('p-total').textContent = data.totalTrades;
-    document.getElementById('p-winrate').textContent = data.winRate ? data.winRate + '%' : '--';
-    const pnl = parseFloat(data.totalPnl);
-    const pnlEl = document.getElementById('p-pnl');
-    pnlEl.textContent = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2);
-    pnlEl.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
-    document.getElementById('p-wins').textContent = data.wins;
-    document.getElementById('p-losses').textContent = data.losses;
-    document.getElementById('p-cycles').textContent = data.cycles;
-    document.getElementById('p-lastAction').textContent = data.lastAction || 'No decisions yet';
-    const tbody = document.getElementById('perf-tbody');
-    if (data.recentTrades && data.recentTrades.length) {
-      tbody.innerHTML = data.recentTrades.map(t => `
-        <tr>
-          <td style="color:var(--orange);font-weight:600">${t.symbol || '--'}</td>
-          <td><span class="badge ${t.side || 'buy'}">${(t.side || 'buy').toUpperCase()}</span></td>
-          <td>${t.qty || '--'}</td>
-          <td>$${t.entry_price ? parseFloat(t.entry_price).toFixed(2) : '--'}</td>
-          <td>$${t.target_price ? parseFloat(t.target_price).toFixed(2) : '--'}</td>
-          <td style="color:var(--green)">${t.edge ? (t.edge*100).toFixed(0)+'%' : '--'}</td>
-          <td><span class="badge ${t.status === 'open' ? 'buy' : 'sell'}">${(t.status||'open').toUpperCase()}</span></td>
-          <td style="color:var(--text3);font-size:10px">${t.created_at ? new Date(t.created_at).toLocaleString() : '--'}</td>
-        </tr>`).join('');
-    } else {
-      tbody.innerHTML = '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:20px">No trades yet. Start the agent to begin trading.</td></tr>';
-    }
-  } catch(e) { console.error('Performance error:', e); }
-}
-
-// ─── News ─────────────────────────────────────────────────────────────────────
-async function loadNews() {
-  try {
-    // Wake backend first if needed
-    await fetch(`${API}/health`).catch(()=>{});
-    await new Promise(r => setTimeout(r, 1000));
-    const res = await fetch(`${API}/news`);
-    const data = await res.json();
-    if (!data.success) return;
-    // Projection
-    if (data.projections) {
-      document.getElementById('newsProjection').textContent = data.projections;
-    }
-    if (data.cachedAt) {
-      document.getElementById('newsCacheTime').textContent = 'Updated: ' + new Date(data.cachedAt).toLocaleTimeString();
-    }
-    // News feed
-    const feed = document.getElementById('newsFeed');
-    if (data.news && data.news.length) {
-      feed.innerHTML = data.news.map((n, i) => `
-        <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;${i%2===0?'background:var(--bg3)':''}">
-          <div style="flex-shrink:0;min-width:60px;color:var(--text3);font-size:9px;padding-top:2px">${new Date(n.pubDate).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
-          <div style="flex:1">
-            <div style="font-size:11px;color:var(--text);line-height:1.5">${n.title}</div>
-            <div style="font-size:9px;color:var(--text3);margin-top:2px">${n.source}</div>
-          </div>
-        </div>`).join('');
-    } else {
-      feed.innerHTML = '<div style="padding:20px;color:var(--text3);text-align:center">No news available</div>';
-    }
-  } catch(e) { console.error('News error:', e); }
-}
-
-// ─── Init ─────────────────────────────────────────────────────────────────────
-// Keep Render backend alive (free tier sleeps after 15min)
-async function pingBackend() {
-  try { await fetch(`${API}/health`); } catch(e) {}
-}
-pingBackend();
-setInterval(pingBackend, 14 * 60 * 1000); // every 14 min
-
-pollStatus();
-setInterval(pollStatus, 10000);
-loadPublicMarkets();
-setInterval(loadPublicMarkets, 30000);
-
-// Auto-load markets when markets panel is shown
-document.addEventListener('DOMContentLoaded', () => {
-  addLog('info', 'KASS Terminal v2.1.0 initialized');
-  addLog('info', `Backend: ${API}`);
-});
+async function ping(){try{await fetch(API+'/health');}catch(e){}}
+ping();setInterval(ping,14*60*1000);
+pollStatus();setInterval(pollStatus,10000);
+loadPublicMarkets();setInterval(loadPublicMarkets,30000);
+setInterval(loadRiskEngine,60000);
+addLog('info','KASS.AI v3.0 -- Bloomberg Terminal of the AI Era');
+addLog('info','Copiloto IA -- Risk Engine -- Diario -- Hedge Fund Mode -- News');
+addLog('info','Markets: [$] Crypto [Kraken] + [^] Stocks [Alpaca] + [*] Prediction [Polymarket]');
 </script>
 </body>
 </html>
