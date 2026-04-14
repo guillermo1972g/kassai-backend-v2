@@ -31,7 +31,7 @@ app.post('/capital/set', async (req, res) => {
   const { amount } = req.body;
   if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
   setCapital(amount);
-  const msg = '💰 *Capital actualizado*\n\nEl agente operará con: *$' + parseFloat(amount).toLocaleString() + '*\nStop loss global: 20%\n\n_KASS.AI Trading System_';
+  const msg = 'ð° *Capital actualizado*\n\nEl agente operarÃ¡ con: *$' + parseFloat(amount).toLocaleString() + '*\nStop loss global: 20%\n\n_KASS.AI Trading System_';
   await sendWhatsApp(msg);
   res.json({ success: true, capital: amount, message: 'Capital set to $' + amount });
 });
@@ -45,7 +45,7 @@ app.post('/capital/withdraw', async (req, res) => {
     }
     const account = await alpaca.getAccount();
     const cash = parseFloat(account.cash);
-    const msg = '💸 *Retiro ejecutado*\n\n' + liquidated + ' posiciones liquidadas\nCash disponible: *$' + cash.toFixed(2) + '*\n\nFondos disponibles en tu cuenta Alpaca.\n\n_KASS.AI Trading System_';
+    const msg = 'ð¸ *Retiro ejecutado*\n\n' + liquidated + ' posiciones liquidadas\nCash disponible: *$' + cash.toFixed(2) + '*\n\nFondos disponibles en tu cuenta Alpaca.\n\n_KASS.AI Trading System_';
     await sendWhatsApp(msg);
     res.json({ success: true, liquidated, cash, message: 'All positions closed' });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -55,14 +55,14 @@ app.post('/capital/takeprofit', async (req, res) => {
   const { target } = req.body;
   if (!target || target <= 0) return res.status(400).json({ error: 'Invalid target' });
   setTakeProfit(target);
-  const msg = '🎯 *Take Profit configurado*\n\nEl agente liquidará automáticamente cuando el portfolio llegue a: *$' + parseFloat(target).toLocaleString() + '*\n\n_KASS.AI Trading System_';
+  const msg = 'ð¯ *Take Profit configurado*\n\nEl agente liquidarÃ¡ automÃ¡ticamente cuando el portfolio llegue a: *$' + parseFloat(target).toLocaleString() + '*\n\n_KASS.AI Trading System_';
   await sendWhatsApp(msg);
   res.json({ success: true, target, message: 'Take profit set at $' + target });
 });
 
 // WhatsApp test
 app.post('/notify/test', async (req, res) => {
-  const ok = await sendWhatsApp('🤖 *KASS.AI conectado!*\n\nSistema de alertas funcionando correctamente.\nRecibirás informes a las 8am y 8pm hora Paraguay.\n\n_KASS.AI Trading System_');
+  const ok = await sendWhatsApp('ð¤ *KASS.AI conectado!*\n\nSistema de alertas funcionando correctamente.\nRecibirÃ¡s informes a las 8am y 8pm hora Paraguay.\n\n_KASS.AI Trading System_');
   res.json({ success: ok });
 });
 
@@ -98,6 +98,24 @@ app.get('/api/agent/daily-ideas', async (req, res) => {
     for (const idea of ideas) { if (idea.asset && prices[idea.asset]) idea.price = prices[idea.asset]; }
     res.json({ success: true, ideas });
   } catch(error) { res.status(500).json({ error: error.message }); }
+});
+
+
+// Auth - create user without email confirmation
+app.post('/auth/create-user', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    const { createClient } = require('@supabase/supabase-js');
+    const adminClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+    const { data, error } = await adminClient.auth.admin.createUser({
+      email, password,
+      email_confirm: true,
+      user_metadata: { created_via: 'gelt365_backend' }
+    });
+    if (error) return res.status(400).json({ success: false, error: error.message });
+    res.json({ success: true, user: data.user?.id });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 const PORT = process.env.PORT || 3000;
