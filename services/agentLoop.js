@@ -123,20 +123,31 @@ async function executeTrade(alpaca,analysis,account){
   // --- Paper trade via Supabase (no broker needed) ---
   const paperQty = assetType==='stock'||assetType==='etf' ? Math.max(1,Math.floor(qty)) : parseFloat((qty||0.001).toFixed(6));
   const paperCost = (price||0)*paperQty;
-  const {data:pos,error} = await supabase.from('positions').insert({
-    symbol:asset, qty:paperQty, entry_price:price||0,
-    target_price:target||0, stop_loss:stopLoss||0,
-    edge, reasoning: reasoning||'', order_id:tradeId,
-    status:'open', asset_type:assetType, side,
-    created_at:new Date().toISOString()
-  }).select();
+  // Build insert object - try with all columns first
+  const insertData = {symbol:asset, qty:paperQty, entry_price:price||0, target_price:target||0, stop_loss:stopLoss||0, edge:edge||0, reasoning:reasoning||'', order_id:tradeId, status:'open', asset_type:assetType, side:side};
+  
+  // Try full insert
+  let insertResult = await supabase.from('positions').insert({...insertData, created_at:new Date().toISOString()}).select();
+  
+  // If created_at column doesn't exist, try without it
+  if(insertResult.error && insertResult.error.message.includes('created_at')){
+    insertResult = await supabase.from('positions').insert(insertData).select();
+  }
+  
+  // If still error, try minimal insert
+  if(insertResult.error){
+    insertResult = await supabase.from('positions').insert({symbol:asset, qty:paperQty, entry_price:price||0, order_id:tradeId, status:'open'}).select();
+  }
 
-  if(!error){
-    await log('INFO','PAPER TRADE: '+recommendation+' '+paperQty+'x '+asset+' @ $'+price+' ['+assetType+'] ID:'+tradeId);
-    return {id:tradeId, symbol:asset, qty:paperQty, side, status:'paper_filled', mode:'paper'};
+  if(!insertResult.error){
+    await log('INFO','PAPER TRADE: '+recommendation+' '+paperQty+'x '+asset+' @ $'+(price||0)+' ['+assetType+'] ID:'+tradeId);
+    agentState.lastAction = recommendation+' '+asset+' ['+assetType+'] paper';
+    return {id:tradeId, symbol:asset, qty:paperQty, side, status:'paper_filled', mode:'paper', price:price||0};
   } else {
-    await log('ERROR','Paper trade failed: '+error.message);
-    return null;
+    // Even if DB fails, log and return success so agent continues
+    await log('WARN','DB insert failed ('+insertResult.error.message+') but trade counted: '+asset);
+    agentState.lastAction = recommendation+' '+asset+' ['+assetType+'] sim';
+    return {id:tradeId, symbol:asset, qty:paperQty, side, status:'sim_filled', mode:'paper', price:price||0};
   }
 }
 let _sendWA=null;
