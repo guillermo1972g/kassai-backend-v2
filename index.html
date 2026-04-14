@@ -213,6 +213,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
           <div class="dot"></div>Activity Log
         </div>
       </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">
+        <div class="nav-label">INTEL</div>
+        <div class="nav-item" onclick="showPanel('performance')" id="nav-performance">
+          <div class="dot"></div>Performance
+        </div>
+        <div class="nav-item" onclick="showPanel('news')" id="nav-news">
+          <div class="dot"></div>News & Projections
+        </div>
+      </div>
 
       <div class="capital-widget">
         <div class="cap-label">CAPITAL</div>
@@ -418,6 +428,56 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         </div>
       </div>
 
+
+      <!-- PERFORMANCE PANEL -->
+      <div id="panel-performance" style="display:none">
+        <div class="panel-header"><div class="panel-title">Performance</div><div class="panel-subtitle">Trade history & results</div></div>
+        <div class="panel-body">
+          <div class="dash-grid" style="margin-bottom:12px">
+            <div class="metric-card"><div class="metric-label">TOTAL TRADES</div><div class="metric-value orange" id="p-total">--</div><div class="metric-sub">All time</div></div>
+            <div class="metric-card"><div class="metric-label">WIN RATE</div><div class="metric-value green" id="p-winrate">--</div><div class="metric-sub">Closed trades</div></div>
+            <div class="metric-card"><div class="metric-label">TOTAL P&amp;L</div><div class="metric-value" id="p-pnl">--</div><div class="metric-sub">Realized</div></div>
+            <div class="metric-card"><div class="metric-label">WINS</div><div class="metric-value green" id="p-wins">--</div><div class="metric-sub">Profitable</div></div>
+            <div class="metric-card"><div class="metric-label">LOSSES</div><div class="metric-value red" id="p-losses">--</div><div class="metric-sub">Unprofitable</div></div>
+            <div class="metric-card"><div class="metric-label">CYCLES</div><div class="metric-value" id="p-cycles">--</div><div class="metric-sub">Analysis ran</div></div>
+          </div>
+          <div style="color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:6px;font-weight:600">LAST AGENT DECISION</div>
+          <div id="p-lastAction" style="background:var(--bg2);border:1px solid var(--border);padding:10px;font-size:11px;color:var(--text2);margin-bottom:12px">--</div>
+          <div style="color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:6px;font-weight:600">TRADE HISTORY</div>
+          <table class="data-table">
+            <thead><tr><th>SYMBOL</th><th>SIDE</th><th>QTY</th><th>ENTRY</th><th>TARGET</th><th>EDGE</th><th>STATUS</th><th>TIME</th></tr></thead>
+            <tbody id="perf-tbody"><tr><td colspan="8" style="color:var(--text3);text-align:center;padding:20px">Loading trade history...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- NEWS & PROJECTIONS PANEL -->
+      <div id="panel-news" style="display:none">
+        <div class="panel-header"><div class="panel-title">News & Projections</div><div class="panel-subtitle">Real-time economic intel + AI analysis</div></div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <div style="color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:8px;font-weight:600">AI PROJECTION — KASS ANALYSIS</div>
+              <div id="newsProjection" style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--orange);padding:12px;font-size:11px;line-height:1.8;color:var(--text);min-height:120px">Loading analysis...</div>
+              <div style="color:var(--text3);font-size:10px;margin-top:4px" id="newsCacheTime">--</div>
+            </div>
+            <div>
+              <div style="color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:8px;font-weight:600">MARKET SENTIMENT</div>
+              <div style="background:var(--bg2);border:1px solid var(--border);padding:12px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:11px;"><span style="color:var(--text3)">Global Markets</span><span id="sent-global" style="color:var(--text)">--</span></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:11px;"><span style="color:var(--text3)">BTC</span><span id="sent-btc" style="color:var(--text)">--</span></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:11px;"><span style="color:var(--text3)">ETH</span><span id="sent-eth" style="color:var(--text)">--</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">S&amp;P 500</span><span id="sent-spy" style="color:var(--text)">--</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:8px;font-weight:600">LATEST HEADLINES</div>
+          <div id="newsFeed" style="display:flex;flex-direction:column;gap:1px;background:var(--bg2);border:1px solid var(--border);">
+            <div style="padding:12px;color:var(--text3);text-align:center">Loading news...</div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 
@@ -619,6 +679,30 @@ async function pollStatus() {
 }
 
 // ─── Market data ──────────────────────────────────────────────────────────────
+async function loadPublicMarkets() {
+  try {
+    const res = await fetch(`${API}/markets/public`);
+    const data = await res.json();
+    // Update crypto ticker
+    if (data.crypto && data.crypto.length) {
+      const btc = data.crypto.find(c => c.pair === 'XBTUSD');
+      const eth = data.crypto.find(c => c.pair === 'ETHUSD');
+      const sol = data.crypto.find(c => c.pair === 'SOLUSD');
+      if (btc) { document.getElementById('t-btc').textContent = '$' + btc.last.toLocaleString(); document.getElementById('t-btc').className = 'ticker-price up'; }
+      if (eth) { document.getElementById('t-eth').textContent = '$' + eth.last.toLocaleString(); document.getElementById('t-eth').className = 'ticker-price up'; }
+      if (sol) { document.getElementById('t-sol').textContent = '$' + sol.last.toFixed(2); document.getElementById('t-sol').className = 'ticker-price up'; }
+    }
+    // Update sentiment
+    if (data.crypto && data.crypto.length) {
+      const btc = data.crypto.find(c => c.pair === 'XBTUSD');
+      const eth = data.crypto.find(c => c.pair === 'ETHUSD');
+      if (btc) document.getElementById('sent-btc').textContent = '$' + btc.last.toLocaleString() + (btc.last > btc.vwap24h ? ' +' : ' -');
+      if (eth) document.getElementById('sent-eth').textContent = '$' + eth.last.toLocaleString();
+    }
+    return data;
+  } catch(e) { console.error('Public markets error:', e); return {}; }
+}
+
 async function loadMarkets() {
   try {
     const res = await fetch(`${API}/agent/markets`);
@@ -780,9 +864,76 @@ function addLog(type, msg) {
   if (actLog) actLog.insertAdjacentHTML('afterbegin', entry);
 }
 
+// ─── Performance ─────────────────────────────────────────────────────────────
+async function loadPerformance() {
+  try {
+    const res = await fetch(`${API}/agent/performance`);
+    const data = await res.json();
+    if (!data.success) return;
+    document.getElementById('p-total').textContent = data.totalTrades;
+    document.getElementById('p-winrate').textContent = data.winRate ? data.winRate + '%' : '--';
+    const pnl = parseFloat(data.totalPnl);
+    const pnlEl = document.getElementById('p-pnl');
+    pnlEl.textContent = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2);
+    pnlEl.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('p-wins').textContent = data.wins;
+    document.getElementById('p-losses').textContent = data.losses;
+    document.getElementById('p-cycles').textContent = data.cycles;
+    document.getElementById('p-lastAction').textContent = data.lastAction || 'No decisions yet';
+    const tbody = document.getElementById('perf-tbody');
+    if (data.recentTrades && data.recentTrades.length) {
+      tbody.innerHTML = data.recentTrades.map(t => `
+        <tr>
+          <td style="color:var(--orange);font-weight:600">${t.symbol || '--'}</td>
+          <td><span class="badge ${t.side || 'buy'}">${(t.side || 'buy').toUpperCase()}</span></td>
+          <td>${t.qty || '--'}</td>
+          <td>$${t.entry_price ? parseFloat(t.entry_price).toFixed(2) : '--'}</td>
+          <td>$${t.target_price ? parseFloat(t.target_price).toFixed(2) : '--'}</td>
+          <td style="color:var(--green)">${t.edge ? (t.edge*100).toFixed(0)+'%' : '--'}</td>
+          <td><span class="badge ${t.status === 'open' ? 'buy' : 'sell'}">${(t.status||'open').toUpperCase()}</span></td>
+          <td style="color:var(--text3);font-size:10px">${t.created_at ? new Date(t.created_at).toLocaleString() : '--'}</td>
+        </tr>`).join('');
+    } else {
+      tbody.innerHTML = '<tr><td colspan="8" style="color:var(--text3);text-align:center;padding:20px">No trades yet. Start the agent to begin trading.</td></tr>';
+    }
+  } catch(e) { console.error('Performance error:', e); }
+}
+
+// ─── News ─────────────────────────────────────────────────────────────────────
+async function loadNews() {
+  try {
+    const res = await fetch(`${API}/news`);
+    const data = await res.json();
+    if (!data.success) return;
+    // Projection
+    if (data.projections) {
+      document.getElementById('newsProjection').textContent = data.projections;
+    }
+    if (data.cachedAt) {
+      document.getElementById('newsCacheTime').textContent = 'Updated: ' + new Date(data.cachedAt).toLocaleTimeString();
+    }
+    // News feed
+    const feed = document.getElementById('newsFeed');
+    if (data.news && data.news.length) {
+      feed.innerHTML = data.news.map((n, i) => `
+        <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;${i%2===0?'background:var(--bg3)':''}">
+          <div style="flex-shrink:0;min-width:60px;color:var(--text3);font-size:9px;padding-top:2px">${new Date(n.pubDate).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text);line-height:1.5">${n.title}</div>
+            <div style="font-size:9px;color:var(--text3);margin-top:2px">${n.source}</div>
+          </div>
+        </div>`).join('');
+    } else {
+      feed.innerHTML = '<div style="padding:20px;color:var(--text3);text-align:center">No news available</div>';
+    }
+  } catch(e) { console.error('News error:', e); }
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 pollStatus();
 setInterval(pollStatus, 10000);
+loadPublicMarkets();
+setInterval(loadPublicMarkets, 30000);
 
 // Auto-load markets when markets panel is shown
 document.addEventListener('DOMContentLoaded', () => {

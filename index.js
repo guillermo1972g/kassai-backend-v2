@@ -184,6 +184,7 @@ app.post('/auth/create-user', async (req, res) => {
 // Datos de mercado combinados: Polymarket + Alpaca + Kraken
 const polymarket = require('./services/polymarket');
 const kraken = require('./services/kraken');
+const newsService = require('./services/newsService');
 
 app.get('/agent/markets', async (req, res) => {
   try {
@@ -232,6 +233,75 @@ app.get('/agent/positions', async (req, res) => {
       alpaca: alpacaPos.status === 'fulfilled' ? alpacaPos.value : [],
       agent: dbPos.status === 'fulfilled' ? (dbPos.value.data || []) : [],
       mode: liveAlpaca ? 'live' : 'paper',
+      timestamp: new Date().toISOString()
+    });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+
+// ─── NEWS & PROJECTIONS ───────────────────────────────────────────────────────
+app.get('/news', async (req, res) => {
+  try {
+    const data = await newsService.getNewsAndProjections();
+    res.json({ success: true, ...data, cachedAt: new Date(data.ts).toISOString() });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── PERFORMANCE & TRADE HISTORY ─────────────────────────────────────────────
+app.get('/agent/performance', async (req, res) => {
+  try {
+    const { data: positions, error } = await supabase
+      .from('positions').select('*').order('created_at', { ascending: false }).limit(100);
+    if (error) throw error;
+    const closed = (positions || []).filter(p => p.status === 'closed' || p.exit_price);
+    const open   = (positions || []).filter(p => p.status === 'open' && !p.exit_price);
+    const wins   = closed.filter(p => {
+      const pl = p.exit_price && p.entry_price ? (p.exit_price - p.entry_price) * (p.qty || 1) : (p.pnl || 0);
+      return pl > 0;
+    });
+    const totalPnl = closed.reduce((sum, p) => {
+      const pl = p.exit_price && p.entry_price ? (p.exit_price - p.entry_price) * (p.qty || 1) : (p.pnl || 0);
+      return sum + pl;
+    }, 0);
+    // Get agent status for cycle count
+    const agentStatus = getAgentStatus();
+    res.json({
+      success: true,
+      totalTrades: (positions || []).length,
+      openTrades: open.length,
+      closedTrades: closed.length,
+      wins: wins.length,
+      losses: closed.length - wins.length,
+      winRate: closed.length > 0 ? ((wins.length / closed.length) * 100).toFixed(1) : null,
+      totalPnl: totalPnl.toFixed(2),
+      cycles: agentStatus.cycleCount,
+      lastAction: agentStatus.lastAction,
+      marketMode: agentStatus.marketMode,
+      recentTrades: (positions || []).slice(0, 20)
+    });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.get('/agent/history', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('positions').select('*').order('created_at', { ascending: false }).limit(50);
+    if (error) throw error;
+    res.json({ success: true, trades: data || [] });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── PUBLIC MARKET DATA (no API key needed) ───────────────────────────────────
+app.get('/markets/public', async (req, res) => {
+  try {
+    const [cryptoRes, polyRes] = await Promise.allSettled([
+      kraken.getTickers(['XBTUSD', 'ETHUSD', 'SOLUSD', 'ADAUSD']),
+      polymarket.getActiveMarkets(6)
+    ]);
+    res.json({
+      success: true,
+      crypto: cryptoRes.status === 'fulfilled' ? cryptoRes.value : [],
+      polymarket: polyRes.status === 'fulfilled' ? polyRes.value : [],
       timestamp: new Date().toISOString()
     });
   } catch(e) { res.status(500).json({ success: false, error: e.message }); }
