@@ -7,7 +7,7 @@ const CONFIG = {
   INTERVAL_MS: 90*1000, MAX_POSITIONS: 3, STOP_LOSS_PCT: 0.20, MIN_EDGE_PCT: 0.15,
   US_STOCKS: ['AAPL','TSLA','NVDA','MSFT','AMZN','GOOGL','META','AMD','SPY','QQQ'],
   CRYPTO: ['BTC/USD','ETH/USD','SOL/USD','DOGE/USD','AVAX/USD','LINK/USD'],
-  GLOBAL_ETFS: ['EWJ','FXI','EWG','EWU','EWZ','EWT','EWY','VGK'],
+  GLOBAL_ETFS: ['EWJ','FXI','EWG','EWU','EWZ','EWT','EWY','VGK','EIS','ISRA'],// EIS/ISRA = Israel ETFs
   FOREX_PAIRS: ['EUR','GBP','JPY','AUD','CAD','CHF'],
 };
 let agentState = { running:false,intervalId:null,cycleCount:0,lastCycle:null,lastAction:'NONE',status:'STOPPED',marketMode:'UNKNOWN',capitalLimit:Infinity,takeProfitTarget:null };
@@ -18,6 +18,9 @@ function getActiveMarkets(){
   const open=['CRYPTO'];
   if((day>=1&&day<=4)||(day===5&&utcT<22*60)||(day===0&&utcT>=21*60))open.push('FOREX');
   if(wd&&utcT<9*60)open.push('ASIA');
+  // Israel/TASE: Sun-Thu 06:59-14:15 UTC (Israel UTC+3)
+  const israelDay = day === 0 || (day >= 1 && day <= 4);
+  if(israelDay&&utcT>=6*60+59&&utcT<14*60+15)open.push('ISRAEL');
   if(wd&&utcT>=7*60&&utcT<16*60+30)open.push('EUROPA');
   if(wd&&utcT>=13*60+30&&utcT<20*60)open.push('USA');
   return{open,mode:open.join('+')};
@@ -30,7 +33,7 @@ async function getMarketData(alpaca,mi){
   const p={};
   for(const t of CONFIG.CRYPTO){try{const q=await alpaca.getLatestCryptoBars(t,{timeframe:'1Min',limit:1});const b=q[t];if(b&&b.length>0)p[t]={price:b[b.length-1].c,type:'crypto'};}catch(e){}}
   if(mi.open.includes('USA')){for(const t of CONFIG.US_STOCKS){try{const q=await alpaca.getLatestTrade(t);p[t]={price:q.Price,type:'stock'};}catch(e){}}}
-  if(mi.open.includes('ASIA')||mi.open.includes('EUROPA')){
+  if(mi.open.includes('ASIA')||mi.open.includes('EUROPA')||mi.open.includes('ISRAEL')||mi.open.includes('LATAM')){
     for(const etf of CONFIG.GLOBAL_ETFS){try{
       const r=await fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+etf+'?interval=1m&range=1d');
       const d=await r.json();const price=d?.chart?.result?.[0]?.meta?.regularMarketPrice;
