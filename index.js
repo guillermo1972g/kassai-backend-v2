@@ -179,6 +179,64 @@ app.post('/auth/create-user', async (req, res) => {
   } catch(e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// ─── NUEVOS ENDPOINTS v2.1 ────────────────────────────────────────────────────
+
+// Datos de mercado combinados: Polymarket + Alpaca + Kraken
+const polymarket = require('./services/polymarket');
+const kraken = require('./services/kraken');
+
+app.get('/agent/markets', async (req, res) => {
+  try {
+    const [polyData, cryptoData, stockQuotes] = await Promise.allSettled([
+      polymarket.getActiveMarkets(5),
+      kraken.getTickers(),
+      alpaca.getPositions().then(() => alpaca.getAccount())
+    ]);
+    res.json({
+      success: true,
+      polymarket: polyData.status === 'fulfilled' ? polyData.value : { error: polyData.reason?.message },
+      crypto: cryptoData.status === 'fulfilled' ? cryptoData.value : { error: cryptoData.reason?.message },
+      stocks: stockQuotes.status === 'fulfilled' ? stockQuotes.value : { error: stockQuotes.reason?.message },
+      timestamp: new Date().toISOString()
+    });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Log de actividad del agente desde Supabase
+app.get('/agent/log', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('logs').select('*').order('created_at', { ascending: false }).limit(50);
+    if (error) throw error;
+    res.json({ success: true, logs: data });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Sugerencias IA desde Supabase
+app.get('/agent/suggestions', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('suggestions').select('*').order('created_at', { ascending: false }).limit(10);
+    if (error) throw error;
+    res.json({ success: true, suggestions: data || [] });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Posiciones combinadas (agente + Alpaca)
+app.get('/agent/positions', async (req, res) => {
+  try {
+    const [alpacaPos, dbPos] = await Promise.allSettled([
+      alpaca.getPositions(),
+      supabase.from('positions').select('*').eq('status', 'open').limit(20)
+    ]);
+    res.json({
+      success: true,
+      alpaca: alpacaPos.status === 'fulfilled' ? alpacaPos.value : [],
+      agent: dbPos.status === 'fulfilled' ? (dbPos.value.data || []) : [],
+      mode: liveAlpaca ? 'live' : 'paper',
+      timestamp: new Date().toISOString()
+    });
+  } catch(e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log('KASS.AI Backend v2 on port ' + PORT);

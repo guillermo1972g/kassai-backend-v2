@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KASS.AI — Autonomous Trading Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0a0a;
+  --bg2: #111111;
+  --bg3: #161616;
+  --border: #222222;
+  --orange: #FF6600;
+  --green: #00FF41;
+  --red: #FF3333;
+  --yellow: #FFD700;
+  --blue: #00BFFF;
+  --cyan: #00FFFF;
+  --text: #CCCCCC;
+  --text2: #888888;
+  --text3: #555555;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-sans: 'IBM Plex Sans', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-mono);font-size:12px;overflow:hidden;}
+
+/* ─── Layout ─────────────────────────────── */
+.terminal{display:flex;flex-direction:column;height:100vh;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 12px;display:flex;align-items:center;gap:12px;height:36px;flex-shrink:0;}
+.logo{color:var(--orange);font-weight:700;font-size:14px;letter-spacing:2px;}
+.logo span{color:var(--text2);font-weight:300;}
+.mode-badge{padding:2px 8px;border-radius:2px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;}
+.mode-badge.paper{background:#1a2a1a;color:var(--green);border:1px solid var(--green);}
+.mode-badge.live{background:#2a1a1a;color:var(--red);border:1px solid var(--red);animation:pulse-red 2s infinite;}
+@keyframes pulse-red{0%,100%{box-shadow:0 0 4px var(--red);}50%{box-shadow:0 0 12px var(--red);}}
+.agent-btn{padding:3px 10px;border-radius:2px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid;font-family:var(--font-mono);transition:all .2s;letter-spacing:.5px;}
+.btn-start{background:#003300;color:var(--green);border-color:var(--green);}
+.btn-start:hover{background:#004400;}
+.btn-stop{background:#330000;color:var(--red);border-color:var(--red);}
+.btn-stop:hover{background:#440000;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.clock{color:var(--text2);font-size:11px;}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);}
+.status-dot.running{background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ─── Main content ────────────────────────── */
+.main{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:200px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.nav-section{padding:8px 0;}
+.nav-label{padding:4px 12px;color:var(--text3);font-size:10px;letter-spacing:2px;text-transform:uppercase;}
+.nav-item{padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text2);transition:all .15s;border-left:2px solid transparent;}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:var(--bg3);color:var(--orange);border-left-color:var(--orange);}
+.nav-item .dot{width:5px;height:5px;border-radius:50%;background:var(--text3);}
+.nav-item.active .dot{background:var(--orange);}
+.nav-divider{border-top:1px solid var(--border);margin:4px 0;}
+
+/* Capital widget */
+.capital-widget{padding:12px;border-top:1px solid var(--border);margin-top:auto;}
+.cap-label{color:var(--text3);font-size:10px;letter-spacing:1px;margin-bottom:4px;}
+.cap-value{color:var(--green);font-size:16px;font-weight:700;}
+.cap-pnl{font-size:10px;margin-top:2px;}
+.cap-pnl.positive{color:var(--green);}
+.cap-pnl.negative{color:var(--red);}
+
+/* ─── Content panel ───────────────────────── */
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.panel-header{padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;gap:8px;}
+.panel-title{color:var(--orange);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
+.panel-subtitle{color:var(--text3);font-size:10px;}
+.panel-body{flex:1;overflow-y:auto;padding:12px;}
+
+/* ─── Dashboard grid ─────────────────────── */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;}
+.metric-card{background:var(--bg2);border:1px solid var(--border);padding:10px 12px;border-radius:2px;}
+.metric-label{color:var(--text3);font-size:10px;letter-spacing:1px;margin-bottom:4px;}
+.metric-value{font-size:18px;font-weight:700;}
+.metric-value.green{color:var(--green);}
+.metric-value.orange{color:var(--orange);}
+.metric-value.red{color:var(--red);}
+.metric-value.blue{color:var(--blue);}
+.metric-sub{color:var(--text3);font-size:10px;margin-top:2px;}
+
+/* ─── Market ticker ──────────────────────── */
+.ticker-bar{background:var(--bg2);border:1px solid var(--border);padding:8px 12px;margin-bottom:10px;display:flex;gap:20px;overflow-x:auto;flex-wrap:nowrap;}
+.ticker-item{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
+.ticker-sym{color:var(--text2);font-size:10px;letter-spacing:1px;}
+.ticker-price{font-size:13px;font-weight:600;}
+.ticker-chg{font-size:10px;}
+.up{color:var(--green);}
+.down{color:var(--red);}
+
+/* ─── Agent control panel ────────────────── */
+.agent-panel{background:var(--bg2);border:1px solid var(--border);padding:12px;margin-bottom:10px;}
+.agent-panel-title{color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:10px;font-weight:600;}
+.agent-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.agent-stat{background:var(--bg3);padding:8px;border-radius:2px;}
+.agent-stat-label{color:var(--text3);font-size:9px;letter-spacing:1px;margin-bottom:3px;}
+.agent-stat-value{font-size:12px;font-weight:600;color:var(--text);}
+.market-toggles{display:flex;gap:8px;margin-top:10px;}
+.market-toggle{padding:3px 10px;border-radius:2px;font-size:10px;cursor:pointer;border:1px solid var(--border);color:var(--text3);font-family:var(--font-mono);}
+.market-toggle.active.poly{background:#1a0a2a;color:#9966FF;border-color:#9966FF;}
+.market-toggle.active.stocks{background:#0a1a2a;color:var(--blue);border-color:var(--blue);}
+.market-toggle.active.crypto{background:#2a1a0a;color:var(--yellow);border-color:var(--yellow);}
+
+/* ─── Table ───────────────────────────────── */
+.data-table{width:100%;border-collapse:collapse;font-size:11px;}
+.data-table th{color:var(--text3);font-size:10px;letter-spacing:1px;text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);font-weight:500;}
+.data-table td{padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text);}
+.data-table tr:hover td{background:var(--bg3);}
+.badge{padding:1px 6px;border-radius:2px;font-size:9px;font-weight:700;letter-spacing:.5px;}
+.badge.buy{background:#003300;color:var(--green);}
+.badge.sell{background:#330000;color:var(--red);}
+.badge.paper{background:#1a1a00;color:var(--yellow);}
+.badge.live{background:#2a0000;color:var(--red);}
+.badge.yes{background:#003300;color:var(--green);}
+.badge.no{background:#330000;color:var(--red);}
+
+/* ─── Activity log ────────────────────────── */
+.log-entry{padding:5px 8px;border-bottom:1px solid #1a1a1a;display:flex;gap:8px;align-items:flex-start;}
+.log-time{color:var(--text3);font-size:10px;flex-shrink:0;width:60px;}
+.log-type{font-size:9px;padding:1px 5px;border-radius:1px;flex-shrink:0;}
+.log-type.info{background:#1a1a2a;color:var(--blue);}
+.log-type.trade{background:#1a2a1a;color:var(--green);}
+.log-type.warn{background:#2a2a0a;color:var(--yellow);}
+.log-type.error{background:#2a0a0a;color:var(--red);}
+.log-msg{color:var(--text);font-size:11px;line-height:1.4;}
+
+/* ─── Analysis pane ───────────────────────── */
+.analysis-box{background:var(--bg3);border:1px solid var(--border);padding:12px;font-size:12px;line-height:1.7;color:var(--text);min-height:120px;white-space:pre-wrap;}
+.analysis-prompt{display:flex;gap:8px;margin-top:10px;}
+.analysis-input{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 10px;font-family:var(--font-mono);font-size:11px;outline:none;}
+.analysis-input:focus{border-color:var(--orange);}
+.analysis-submit{background:var(--orange);color:#000;border:none;padding:6px 14px;font-family:var(--font-mono);font-size:11px;font-weight:700;cursor:pointer;}
+
+/* ─── Bottom bar ──────────────────────────── */
+.bottombar{background:var(--bg2);border-top:1px solid var(--border);padding:4px 12px;display:flex;align-items:center;gap:16px;height:24px;flex-shrink:0;}
+.bb-item{color:var(--text3);font-size:10px;}
+.bb-item span{color:var(--text2);}
+.bb-agent{color:var(--green);font-size:10px;}
+
+/* ─── Scrollbar ───────────────────────────── */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border);}
+
+/* ─── Tabs ─────────────────────────────────── */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg2);}
+.tab{padding:8px 16px;cursor:pointer;color:var(--text3);font-size:11px;border-bottom:2px solid transparent;transition:all .15s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+
+/* ─── Responsive sidebar ──────────────────── */
+.sidebar-divider{height:1px;background:var(--border);margin:4px 0;}
+</style>
+</head>
+<body>
+<div class="terminal">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="logo">KASS<span>.AI</span></div>
+    <div class="status-dot" id="agentDot"></div>
+    <div id="modeBadge" class="mode-badge paper" onclick="toggleMode()">📄 PAPER</div>
+    <button class="agent-btn btn-start" id="btnStart" onclick="startAgent()">▶ START AGENT</button>
+    <button class="agent-btn btn-stop" id="btnStop" onclick="stopAgent()" style="display:none">■ STOP</button>
+    <div class="topbar-right">
+      <div class="bb-item">CYCLE: <span id="cycleCount">0</span></div>
+      <div class="bb-item">POSITIONS: <span id="posCount">0</span>/3</div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="nav-section">
+        <div class="nav-label">TERMINAL</div>
+        <div class="nav-item active" onclick="showPanel('dashboard')" id="nav-dashboard">
+          <div class="dot"></div>Dashboard
+        </div>
+        <div class="nav-item" onclick="showPanel('agent')" id="nav-agent">
+          <div class="dot"></div>Agent Control
+        </div>
+        <div class="nav-item" onclick="showPanel('markets')" id="nav-markets">
+          <div class="dot"></div>Live Markets
+        </div>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">
+        <div class="nav-label">TRADING</div>
+        <div class="nav-item" onclick="showPanel('positions')" id="nav-positions">
+          <div class="dot"></div>Positions
+        </div>
+        <div class="nav-item" onclick="showPanel('simtrades')" id="nav-simtrades">
+          <div class="dot"></div>Sim Trades
+        </div>
+        <div class="nav-item" onclick="showPanel('suggestions')" id="nav-suggestions">
+          <div class="dot"></div>Suggestions
+        </div>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">
+        <div class="nav-label">ANALYSIS</div>
+        <div class="nav-item" onclick="showPanel('analysis')" id="nav-analysis">
+          <div class="dot"></div>AI Analysis
+        </div>
+        <div class="nav-item" onclick="showPanel('activity')" id="nav-activity">
+          <div class="dot"></div>Activity Log
+        </div>
+      </div>
+
+      <div class="capital-widget">
+        <div class="cap-label">CAPITAL</div>
+        <div class="cap-value" id="capitalValue">$500.00</div>
+        <div class="cap-pnl positive" id="capitalPnl">+$0.00 (0.00%)</div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- DASHBOARD PANEL -->
+      <div id="panel-dashboard">
+        <div class="panel-header">
+          <div class="panel-title">Dashboard</div>
+          <div class="panel-subtitle">Autonomous Trading Overview</div>
+        </div>
+        <div class="panel-body">
+          <div class="dash-grid">
+            <div class="metric-card">
+              <div class="metric-label">CAPITAL</div>
+              <div class="metric-value green" id="m-capital">$500.00</div>
+              <div class="metric-sub">Available</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">P&L TODAY</div>
+              <div class="metric-value orange" id="m-pnl">$0.00</div>
+              <div class="metric-sub">Unrealized</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">OPEN POS.</div>
+              <div class="metric-value blue" id="m-positions">0</div>
+              <div class="metric-sub">Max 3</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">CYCLE</div>
+              <div class="metric-value" id="m-cycle">0</div>
+              <div class="metric-sub">90s interval</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">WIN RATE</div>
+              <div class="metric-value green" id="m-winrate">—</div>
+              <div class="metric-sub">Closed trades</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">UPTIME</div>
+              <div class="metric-value" id="m-uptime">—</div>
+              <div class="metric-sub">Since start</div>
+            </div>
+          </div>
+
+          <!-- Ticker bar -->
+          <div class="ticker-bar" id="tickerBar">
+            <div class="ticker-item"><div class="ticker-sym">BTC/USD</div><div class="ticker-price" id="t-btc">—</div><div class="ticker-chg" id="tc-btc">—</div></div>
+            <div class="ticker-item"><div class="ticker-sym">ETH/USD</div><div class="ticker-price" id="t-eth">—</div><div class="ticker-chg" id="tc-eth">—</div></div>
+            <div class="ticker-item"><div class="ticker-sym">SOL/USD</div><div class="ticker-price" id="t-sol">—</div><div class="ticker-chg" id="tc-sol">—</div></div>
+            <div class="ticker-item"><div class="ticker-sym">SPY</div><div class="ticker-price" id="t-spy">—</div><div class="ticker-chg" id="tc-spy">—</div></div>
+            <div class="ticker-item"><div class="ticker-sym">QQQ</div><div class="ticker-price" id="t-qqq">—</div><div class="ticker-chg" id="tc-qqq">—</div></div>
+            <div class="ticker-item"><div class="ticker-sym">TSLA</div><div class="ticker-price" id="t-tsla">—</div><div class="ticker-chg" id="tc-tsla">—</div></div>
+            <div class="ticker-item"><div class="ticker-sym">NVDA</div><div class="ticker-price" id="t-nvda">—</div><div class="ticker-chg" id="tc-nvda">—</div></div>
+          </div>
+
+          <!-- Recent activity -->
+          <div style="color:var(--orange);font-size:10px;letter-spacing:2px;margin-bottom:6px;font-weight:600;">RECENT ACTIVITY</div>
+          <div id="dashLog" style="background:var(--bg2);border:1px solid var(--border);">
+            <div class="log-entry"><div class="log-time">--:--:--</div><div class="log-type info">INFO</div><div class="log-msg">KASS Terminal initialized. Waiting for agent start.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT CONTROL PANEL -->
+      <div id="panel-agent" style="display:none">
+        <div class="panel-header">
+          <div class="panel-title">Agent Control</div>
+          <div class="panel-subtitle">KASS Autonomous Engine</div>
+        </div>
+        <div class="panel-body">
+          <div class="agent-panel">
+            <div class="agent-panel-title">⚡ AGENT STATUS</div>
+            <div class="agent-grid">
+              <div class="agent-stat"><div class="agent-stat-label">STATUS</div><div class="agent-stat-value" id="a-status">STOPPED</div></div>
+              <div class="agent-stat"><div class="agent-stat-label">MODE</div><div class="agent-stat-value" id="a-mode">PAPER</div></div>
+              <div class="agent-stat"><div class="agent-stat-label">CYCLE #</div><div class="agent-stat-value" id="a-cycle">0</div></div>
+              <div class="agent-stat"><div class="agent-stat-label">UPTIME</div><div class="agent-stat-value" id="a-uptime">—</div></div>
+              <div class="agent-stat"><div class="agent-stat-label">CAPITAL</div><div class="agent-stat-value" id="a-capital">$500.00</div></div>
+              <div class="agent-stat"><div class="agent-stat-label">POSITIONS</div><div class="agent-stat-value" id="a-pos">0 / 3</div></div>
+            </div>
+            <div class="market-toggles">
+              <div class="market-toggle active poly" id="toggle-poly" onclick="toggleMarket('polymarket')">⬡ POLYMARKET</div>
+              <div class="market-toggle active stocks" id="toggle-stocks" onclick="toggleMarket('stocks')">📈 STOCKS</div>
+              <div class="market-toggle active crypto" id="toggle-crypto" onclick="toggleMarket('crypto')">₿ CRYPTO</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-bottom:10px;">
+            <div style="flex:1;background:var(--bg2);border:1px solid var(--border);padding:10px;">
+              <div style="color:var(--text3);font-size:10px;letter-spacing:1px;margin-bottom:6px;">RISK PARAMS</div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Stop loss global</span><span style="color:var(--red)">20%</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Min edge required</span><span style="color:var(--green)">15%</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Max positions</span><span style="color:var(--blue)">3</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Cycle interval</span><span style="color:var(--text)">90s</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:var(--text3)">Max capital</span><span style="color:var(--orange)">$500</span></div>
+              </div>
+            </div>
+            <div style="flex:1;background:var(--bg2);border:1px solid var(--border);padding:10px;">
+              <div style="color:var(--text3);font-size:10px;letter-spacing:1px;margin-bottom:6px;">LAST DECISION</div>
+              <div id="lastDecision" style="font-size:11px;color:var(--text2);line-height:1.6;">Waiting for agent cycle...</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;">
+            <button class="agent-btn btn-start" style="flex:1;padding:10px" onclick="startAgent()">▶ START AGENT (24/7)</button>
+            <button class="agent-btn btn-stop" style="flex:1;padding:10px" onclick="stopAgent()">■ STOP AGENT</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIVE MARKETS PANEL -->
+      <div id="panel-markets" style="display:none">
+        <div class="panel-header">
+          <div class="panel-title">Live Markets</div>
+          <div class="panel-subtitle">Polymarket · Alpaca · Kraken</div>
+        </div>
+        <div class="panel-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchMarketTab('poly')" id="mtab-poly">⬡ POLYMARKET</div>
+            <div class="tab" onclick="switchMarketTab('stocks')" id="mtab-stocks">📈 STOCKS</div>
+            <div class="tab" onclick="switchMarketTab('crypto')" id="mtab-crypto">₿ CRYPTO</div>
+          </div>
+          <div id="market-poly" style="padding-top:10px">
+            <table class="data-table">
+              <thead><tr><th>QUESTION</th><th>YES</th><th>NO</th><th>VOLUME</th><th>LIQ.</th></tr></thead>
+              <tbody id="poly-tbody"><tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">Loading Polymarket data...</td></tr></tbody>
+            </table>
+          </div>
+          <div id="market-stocks" style="display:none;padding-top:10px">
+            <table class="data-table">
+              <thead><tr><th>SYMBOL</th><th>ASK</th><th>BID</th><th>RSI</th><th>TREND</th></tr></thead>
+              <tbody id="stocks-tbody"><tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">Loading stocks data...</td></tr></tbody>
+            </table>
+          </div>
+          <div id="market-crypto" style="display:none;padding-top:10px">
+            <table class="data-table">
+              <thead><tr><th>PAIR</th><th>LAST</th><th>24H HIGH</th><th>24H LOW</th><th>VOL 24H</th><th>RSI</th></tr></thead>
+              <tbody id="crypto-tbody"><tr><td colspan="6" style="color:var(--text3);text-align:center;padding:20px">Loading crypto data...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- POSITIONS PANEL -->
+      <div id="panel-positions" style="display:none">
+        <div class="panel-header"><div class="panel-title">Positions</div><div class="panel-subtitle">Open trades across all markets</div></div>
+        <div class="panel-body">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>MARKET</th><th>SYMBOL</th><th>DIRECTION</th><th>SIZE</th><th>OPENED</th><th>MODE</th></tr></thead>
+            <tbody id="positions-tbody"><tr><td colspan="7" style="color:var(--text3);text-align:center;padding:20px">No open positions</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SIM TRADES PANEL -->
+      <div id="panel-simtrades" style="display:none">
+        <div class="panel-header"><div class="panel-title">Sim Trades</div><div class="panel-subtitle">Paper trading history</div></div>
+        <div class="panel-body">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>SOURCE</th><th>SYMBOL</th><th>TYPE</th><th>SIZE</th><th>STATUS</th><th>TIME</th></tr></thead>
+            <tbody id="simtrades-tbody"><tr><td colspan="7" style="color:var(--text3);text-align:center;padding:20px">No sim trades yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUGGESTIONS PANEL -->
+      <div id="panel-suggestions" style="display:none">
+        <div class="panel-header"><div class="panel-title">Suggestions</div><div class="panel-subtitle">AI-generated trade ideas</div></div>
+        <div class="panel-body">
+          <div id="suggestions-list" style="display:flex;flex-direction:column;gap:8px;">
+            <div style="color:var(--text3);text-align:center;padding:20px">No suggestions yet. Start the agent to generate ideas.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI ANALYSIS PANEL -->
+      <div id="panel-analysis" style="display:none">
+        <div class="panel-header"><div class="panel-title">AI Analysis</div><div class="panel-subtitle">Ask KASS anything</div></div>
+        <div class="panel-body">
+          <div class="analysis-box" id="analysisBox">KASS&gt; Ready for analysis. Ask me about any market, position, or strategy.</div>
+          <div class="analysis-prompt">
+            <input class="analysis-input" id="analysisInput" placeholder="e.g. What's your view on BTC this cycle?" onkeydown="if(event.key==='Enter')runAnalysis()"/>
+            <button class="analysis-submit" onclick="runAnalysis()">ANALYZE</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY LOG PANEL -->
+      <div id="panel-activity" style="display:none">
+        <div class="panel-header"><div class="panel-title">Activity Log</div><div class="panel-subtitle">Real-time agent events</div></div>
+        <div class="panel-body" style="padding:0">
+          <div id="activityLog" style="font-family:var(--font-mono);">
+            <div class="log-entry"><div class="log-time">00:00:00</div><div class="log-type info">INFO</div><div class="log-msg">KASS Terminal v2.1.0 initialized</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+
+  <!-- BOTTOM BAR -->
+  <div class="bottombar">
+    <div class="bb-item">KASS.AI <span>v2.1.0</span></div>
+    <div class="bb-item">BACKEND: <span id="backendStatus">CHECKING...</span></div>
+    <div class="bb-item">SUPABASE: <span id="dbStatus">—</span></div>
+    <div class="bb-agent" id="agentStatusBar">AGENT: STOPPED</div>
+    <div style="margin-left:auto">
+      <div class="bb-item">LAST UPDATE: <span id="lastUpdate">—</span></div>
+    </div>
+  </div>
+
+</div><!-- /terminal -->
+
+<script>
+const API = 'https://kassai-backend-v2.onrender.com';
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let state = {
+  mode: 'paper',
+  agentRunning: false,
+  capital: 500,
+  startCapital: 500,
+  positions: [],
+  tradeLog: [],
+  cycle: 0,
+  markets: { polymarket: true, stocks: true, crypto: true },
+  marketData: {}
+};
+
+// ─── Clock ────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toTimeString().slice(0,8) + ' UTC';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── Nav ──────────────────────────────────────────────────────────────────────
+let currentPanel = 'dashboard';
+function showPanel(name) {
+  document.querySelectorAll('[id^="panel-"]').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + name).style.display = 'flex';
+  document.getElementById('panel-' + name).style.flexDirection = 'column';
+  const nav = document.getElementById('nav-' + name);
+  if (nav) nav.classList.add('active');
+  currentPanel = name;
+  if (name === 'markets') loadMarkets();
+  if (name === 'positions') loadPositions();
+  if (name === 'activity') loadActivityLog();
+  if (name === 'suggestions') loadSuggestions();
+}
+
+// ─── Mode toggle ──────────────────────────────────────────────────────────────
+async function toggleMode() {
+  if (state.agentRunning) {
+    addLog('warn', 'Stop the agent before changing mode');
+    return;
+  }
+  state.mode = state.mode === 'paper' ? 'live' : 'paper';
+  updateModeUI();
+  try {
+    await fetch(`${API}/agent/mode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: state.mode })
+    });
+    addLog('info', `Mode switched to ${state.mode.toUpperCase()}`);
+  } catch(e) {}
+}
+
+function updateModeUI() {
+  const badge = document.getElementById('modeBadge');
+  badge.className = 'mode-badge ' + state.mode;
+  badge.textContent = state.mode === 'paper' ? '📄 PAPER' : '🔴 LIVE';
+  document.getElementById('a-mode').textContent = state.mode.toUpperCase();
+}
+
+// ─── Market toggles ───────────────────────────────────────────────────────────
+function toggleMarket(m) {
+  state.markets[m] = !state.markets[m];
+  const map = { polymarket: 'poly', stocks: 'stocks', crypto: 'crypto' };
+  const el = document.getElementById('toggle-' + map[m] || 'toggle-' + m);
+  if (el) {
+    if (state.markets[m]) el.classList.add('active');
+    else el.classList.remove('active');
+  }
+}
+
+// ─── Agent control ────────────────────────────────────────────────────────────
+async function startAgent() {
+  try {
+    addLog('info', `Starting KASS agent in ${state.mode.toUpperCase()} mode...`);
+    const res = await fetch(`${API}/agent/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: state.mode, capital: 500, markets: state.markets })
+    });
+    const data = await res.json();
+    if (data.success) {
+      state.agentRunning = true;
+      updateAgentUI();
+      addLog('trade', `Agent started | Mode: ${state.mode.toUpperCase()} | Capital: $500`);
+    } else {
+      addLog('error', data.error || 'Failed to start agent');
+    }
+  } catch(e) {
+    addLog('error', 'Backend unreachable: ' + e.message);
+  }
+}
+
+async function stopAgent() {
+  try {
+    const res = await fetch(`${API}/agent/stop`, { method: 'POST' });
+    const data = await res.json();
+    state.agentRunning = false;
+    updateAgentUI();
+    addLog('warn', 'Agent stopped');
+  } catch(e) {
+    addLog('error', 'Stop error: ' + e.message);
+  }
+}
+
+function updateAgentUI() {
+  const dot = document.getElementById('agentDot');
+  const btnStart = document.getElementById('btnStart');
+  const btnStop = document.getElementById('btnStop');
+  const bar = document.getElementById('agentStatusBar');
+  const aStatus = document.getElementById('a-status');
+
+  if (state.agentRunning) {
+    dot.classList.add('running');
+    btnStart.style.display = 'none';
+    btnStop.style.display = 'block';
+    bar.textContent = `AGENT: ${state.mode.toUpperCase()} ● RUNNING`;
+    bar.style.color = 'var(--green)';
+    if (aStatus) aStatus.textContent = '● RUNNING';
+  } else {
+    dot.classList.remove('running');
+    btnStart.style.display = 'block';
+    btnStop.style.display = 'none';
+    bar.textContent = 'AGENT: STOPPED';
+    bar.style.color = 'var(--text3)';
+    if (aStatus) aStatus.textContent = 'STOPPED';
+  }
+}
+
+// ─── Status polling ───────────────────────────────────────────────────────────
+async function pollStatus() {
+  try {
+    const res = await fetch(`${API}/agent/status`);
+    const data = await res.json();
+    if (!data.success) return;
+
+    state.agentRunning = data.running;
+    state.cycle = data.cycleCount || 0;
+    state.positions = data.positions || [];
+    state.capital = data.currentCapital || state.capital;
+
+    // Update UI
+    document.getElementById('cycleCount').textContent = state.cycle;
+    document.getElementById('posCount').textContent = state.positions.length;
+    document.getElementById('m-cycle').textContent = state.cycle;
+    document.getElementById('m-positions').textContent = state.positions.length;
+    document.getElementById('a-cycle').textContent = state.cycle;
+    document.getElementById('a-pos').textContent = `${state.positions.length} / 3`;
+    document.getElementById('capitalValue').textContent = '$' + state.capital.toFixed(2);
+    document.getElementById('m-capital').textContent = '$' + state.capital.toFixed(2);
+    document.getElementById('a-capital').textContent = '$' + state.capital.toFixed(2);
+
+    const pnl = state.capital - state.startCapital;
+    const pnlPct = (pnl / state.startCapital * 100).toFixed(2);
+    const pnlEl = document.getElementById('capitalPnl');
+    pnlEl.textContent = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2) + ' (' + pnlPct + '%)';
+    pnlEl.className = 'cap-pnl ' + (pnl >= 0 ? 'positive' : 'negative');
+    document.getElementById('m-pnl').textContent = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2);
+
+    if (data.uptime) {
+      const h = Math.floor(data.uptime / 3600);
+      const m = Math.floor((data.uptime % 3600) / 60);
+      const s = data.uptime % 60;
+      const upStr = `${h}h ${m}m ${s}s`;
+      document.getElementById('m-uptime').textContent = upStr;
+      document.getElementById('a-uptime').textContent = upStr;
+    }
+
+    updateAgentUI();
+    document.getElementById('lastUpdate').textContent = new Date().toTimeString().slice(0,8);
+    document.getElementById('backendStatus').textContent = '● ONLINE';
+    document.getElementById('backendStatus').style.color = 'var(--green)';
+
+  } catch(e) {
+    document.getElementById('backendStatus').textContent = '● OFFLINE';
+    document.getElementById('backendStatus').style.color = 'var(--red)';
+  }
+}
+
+// ─── Market data ──────────────────────────────────────────────────────────────
+async function loadMarkets() {
+  try {
+    const res = await fetch(`${API}/agent/markets`);
+    const data = await res.json();
+
+    // Polymarket
+    const polyData = Array.isArray(data.polymarket) ? data.polymarket : [];
+    const polyBody = document.getElementById('poly-tbody');
+    polyBody.innerHTML = polyData.length
+      ? polyData.map(m => `
+        <tr>
+          <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.question || '—'}</td>
+          <td class="up">${m.yesPrice ? (m.yesPrice * 100).toFixed(1) + '%' : '—'}</td>
+          <td class="down">${m.noPrice ? (m.noPrice * 100).toFixed(1) + '%' : '—'}</td>
+          <td>$${m.volume ? (m.volume / 1000).toFixed(1) + 'K' : '—'}</td>
+          <td>$${m.liquidity ? (m.liquidity / 1000).toFixed(1) + 'K' : '—'}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">No Polymarket data available</td></tr>';
+
+    // Stocks
+    const stocksData = Array.isArray(data.stocks) ? data.stocks : [];
+    const stocksBody = document.getElementById('stocks-tbody');
+    stocksBody.innerHTML = stocksData.length
+      ? stocksData.map(s => `
+        <tr>
+          <td style="color:var(--orange);font-weight:600">${s.symbol}</td>
+          <td class="up">$${s.askPrice ? s.askPrice.toFixed(2) : '—'}</td>
+          <td>$${s.bidPrice ? s.bidPrice.toFixed(2) : '—'}</td>
+          <td style="color:${s.rsi > 70 ? 'var(--red)' : s.rsi < 30 ? 'var(--green)' : 'var(--text)'}">${s.rsi ? s.rsi.toFixed(1) : '—'}</td>
+          <td><span class="badge ${s.trend === 'above_sma' ? 'buy' : 'sell'}">${s.trend || '—'}</span></td>
+        </tr>`).join('')
+      : '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">Alpaca API key required for stock data</td></tr>';
+
+    // Crypto
+    const cryptoData = Array.isArray(data.crypto) ? data.crypto : [];
+    const cryptoBody = document.getElementById('crypto-tbody');
+    cryptoBody.innerHTML = cryptoData.length
+      ? cryptoData.map(c => `
+        <tr>
+          <td style="color:var(--yellow);font-weight:600">${c.pair}</td>
+          <td>$${c.last ? c.last.toLocaleString() : '—'}</td>
+          <td class="up">$${c.high24h ? c.high24h.toLocaleString() : '—'}</td>
+          <td class="down">$${c.low24h ? c.low24h.toLocaleString() : '—'}</td>
+          <td>${c.volume24h ? c.volume24h.toFixed(1) : '—'}</td>
+          <td style="color:${c.rsi > 70 ? 'var(--red)' : c.rsi < 30 ? 'var(--green)' : 'var(--text)'}">${c.rsi || '—'}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:20px">No crypto data available</td></tr>';
+
+    // Update ticker
+    if (cryptoData.length) {
+      const btc = cryptoData.find(c => c.pair.includes('XBT') || c.pair.includes('BTC'));
+      const eth = cryptoData.find(c => c.pair.includes('ETH'));
+      const sol = cryptoData.find(c => c.pair.includes('SOL'));
+      if (btc) { document.getElementById('t-btc').textContent = '$' + btc.last.toLocaleString(); }
+      if (eth) { document.getElementById('t-eth').textContent = '$' + eth.last.toLocaleString(); }
+      if (sol) { document.getElementById('t-sol').textContent = '$' + sol.last.toFixed(2); }
+    }
+
+  } catch(e) {
+    console.error('Markets load error:', e);
+  }
+}
+
+function switchMarketTab(tab) {
+  ['poly', 'stocks', 'crypto'].forEach(t => {
+    document.getElementById('market-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('mtab-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+// ─── Positions ────────────────────────────────────────────────────────────────
+async function loadPositions() {
+  try {
+    const res = await fetch(`${API}/agent/positions`);
+    const data = await res.json();
+    const all = [...(data.agent || []), ...(data.alpaca || [])];
+    const tbody = document.getElementById('positions-tbody');
+    tbody.innerHTML = all.length
+      ? all.map(p => `
+        <tr>
+          <td style="color:var(--text3);font-size:10px">${(p.id || '—').slice(0, 16)}</td>
+          <td>${p.source || p.market || '—'}</td>
+          <td style="color:var(--orange)">${p.symbol || p.pair || '—'}</td>
+          <td><span class="badge ${p.direction || p.side || p.type}">${p.direction || p.side || p.type || '—'}</span></td>
+          <td>$${(p.size || p.marketValue || 0).toFixed(2)}</td>
+          <td style="color:var(--text3);font-size:10px">${p.openedAt ? new Date(p.openedAt).toTimeString().slice(0,8) : '—'}</td>
+          <td><span class="badge ${p.mode || 'paper'}">${(p.mode || 'paper').toUpperCase()}</span></td>
+        </tr>`).join('')
+      : '<tr><td colspan="7" style="color:var(--text3);text-align:center;padding:20px">No open positions</td></tr>';
+  } catch(e) {}
+}
+
+// ─── Activity log ─────────────────────────────────────────────────────────────
+async function loadActivityLog() {
+  try {
+    const res = await fetch(`${API}/agent/log`);
+    const data = await res.json();
+    if (data.logs) {
+      const container = document.getElementById('activityLog');
+      container.innerHTML = data.logs.map(l => {
+        const t = new Date(l.created_at).toTimeString().slice(0,8);
+        const type = l.type || 'info';
+        const typeClass = type.includes('error') ? 'error' : type.includes('trade') ? 'trade' : type.includes('warn') || type.includes('stop') ? 'warn' : 'info';
+        return `<div class="log-entry"><div class="log-time">${t}</div><div class="log-type ${typeClass}">${type.toUpperCase().slice(0,5)}</div><div class="log-msg">${JSON.stringify(l.data).slice(0,120)}</div></div>`;
+      }).join('');
+    }
+  } catch(e) {}
+}
+
+// ─── Suggestions ─────────────────────────────────────────────────────────────
+async function loadSuggestions() {
+  try {
+    const res = await fetch(`${API}/agent/suggestions`);
+    const data = await res.json();
+    const container = document.getElementById('suggestions-list');
+    if (data.suggestions && data.suggestions.length) {
+      container.innerHTML = data.suggestions.map(s => `
+        <div style="background:var(--bg2);border:1px solid var(--border);padding:10px;">
+          <div style="color:var(--orange);font-size:10px;margin-bottom:4px">${s.created_at ? new Date(s.created_at).toLocaleString() : '—'}</div>
+          <div style="font-size:11px;line-height:1.6">${s.data || s.suggestion || JSON.stringify(s)}</div>
+        </div>`).join('');
+    }
+  } catch(e) {}
+}
+
+// ─── AI Analysis ─────────────────────────────────────────────────────────────
+async function runAnalysis() {
+  const input = document.getElementById('analysisInput');
+  const box = document.getElementById('analysisBox');
+  const prompt = input.value.trim();
+  if (!prompt) return;
+
+  box.textContent = 'KASS> Analyzing...';
+  input.value = '';
+
+  try {
+    const res = await fetch(`${API}/agent/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ context: prompt, mode: state.mode })
+    });
+    const data = await res.json();
+    box.textContent = `KASS> ${data.analysis || 'No response'}`;
+  } catch(e) {
+    box.textContent = `KASS> Error: ${e.message}`;
+  }
+}
+
+// ─── Log helper ───────────────────────────────────────────────────────────────
+function addLog(type, msg) {
+  const t = new Date().toTimeString().slice(0,8);
+  const typeMap = { info: 'info', trade: 'trade', warn: 'warn', error: 'error' };
+  const cls = typeMap[type] || 'info';
+  const entry = `<div class="log-entry"><div class="log-time">${t}</div><div class="log-type ${cls}">${type.toUpperCase()}</div><div class="log-msg">${msg}</div></div>`;
+
+  const dashLog = document.getElementById('dashLog');
+  const actLog = document.getElementById('activityLog');
+  if (dashLog) dashLog.insertAdjacentHTML('afterbegin', entry);
+  if (actLog) actLog.insertAdjacentHTML('afterbegin', entry);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+pollStatus();
+setInterval(pollStatus, 10000);
+
+// Auto-load markets when markets panel is shown
+document.addEventListener('DOMContentLoaded', () => {
+  addLog('info', 'KASS Terminal v2.1.0 initialized');
+  addLog('info', `Backend: ${API}`);
+});
+</script>
+</body>
+</html>
