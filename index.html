@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>KASS.AI — Autonomous Trading Terminal</title>
+<title>KASS.AI -- Autonomous Trading Terminal</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -254,25 +254,25 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
             </div>
             <div class="metric-card">
               <div class="metric-label">WIN RATE</div>
-              <div class="metric-value green" id="m-winrate">—</div>
+              <div class="metric-value green" id="m-winrate">--</div>
               <div class="metric-sub">Closed trades</div>
             </div>
             <div class="metric-card">
               <div class="metric-label">UPTIME</div>
-              <div class="metric-value" id="m-uptime">—</div>
+              <div class="metric-value" id="m-uptime">--</div>
               <div class="metric-sub">Since start</div>
             </div>
           </div>
 
           <!-- Ticker bar -->
           <div class="ticker-bar" id="tickerBar">
-            <div class="ticker-item"><div class="ticker-sym">BTC/USD</div><div class="ticker-price" id="t-btc">—</div><div class="ticker-chg" id="tc-btc">—</div></div>
-            <div class="ticker-item"><div class="ticker-sym">ETH/USD</div><div class="ticker-price" id="t-eth">—</div><div class="ticker-chg" id="tc-eth">—</div></div>
-            <div class="ticker-item"><div class="ticker-sym">SOL/USD</div><div class="ticker-price" id="t-sol">—</div><div class="ticker-chg" id="tc-sol">—</div></div>
-            <div class="ticker-item"><div class="ticker-sym">SPY</div><div class="ticker-price" id="t-spy">—</div><div class="ticker-chg" id="tc-spy">—</div></div>
-            <div class="ticker-item"><div class="ticker-sym">QQQ</div><div class="ticker-price" id="t-qqq">—</div><div class="ticker-chg" id="tc-qqq">—</div></div>
-            <div class="ticker-item"><div class="ticker-sym">TSLA</div><div class="ticker-price" id="t-tsla">—</div><div class="ticker-chg" id="tc-tsla">—</div></div>
-            <div class="ticker-item"><div class="ticker-sym">NVDA</div><div class="ticker-price" id="t-nvda">—</div><div class="ticker-chg" id="tc-nvda">—</div></div>
+            <div class="ticker-item"><div class="ticker-sym">BTC/USD</div><div class="ticker-price" id="t-btc">--</div><div class="ticker-chg" id="tc-btc">--</div></div>
+            <div class="ticker-item"><div class="ticker-sym">ETH/USD</div><div class="ticker-price" id="t-eth">--</div><div class="ticker-chg" id="tc-eth">--</div></div>
+            <div class="ticker-item"><div class="ticker-sym">SOL/USD</div><div class="ticker-price" id="t-sol">--</div><div class="ticker-chg" id="tc-sol">--</div></div>
+            <div class="ticker-item"><div class="ticker-sym">SPY</div><div class="ticker-price" id="t-spy">--</div><div class="ticker-chg" id="tc-spy">--</div></div>
+            <div class="ticker-item"><div class="ticker-sym">QQQ</div><div class="ticker-price" id="t-qqq">--</div><div class="ticker-chg" id="tc-qqq">--</div></div>
+            <div class="ticker-item"><div class="ticker-sym">TSLA</div><div class="ticker-price" id="t-tsla">--</div><div class="ticker-chg" id="tc-tsla">--</div></div>
+            <div class="ticker-item"><div class="ticker-sym">NVDA</div><div class="ticker-price" id="t-nvda">--</div><div class="ticker-chg" id="tc-nvda">--</div></div>
           </div>
 
           <!-- Recent activity -->
@@ -296,7 +296,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
               <div class="agent-stat"><div class="agent-stat-label">STATUS</div><div class="agent-stat-value" id="a-status">STOPPED</div></div>
               <div class="agent-stat"><div class="agent-stat-label">MODE</div><div class="agent-stat-value" id="a-mode">PAPER</div></div>
               <div class="agent-stat"><div class="agent-stat-label">CYCLE #</div><div class="agent-stat-value" id="a-cycle">0</div></div>
-              <div class="agent-stat"><div class="agent-stat-label">UPTIME</div><div class="agent-stat-value" id="a-uptime">—</div></div>
+              <div class="agent-stat"><div class="agent-stat-label">UPTIME</div><div class="agent-stat-value" id="a-uptime">--</div></div>
               <div class="agent-stat"><div class="agent-stat-label">CAPITAL</div><div class="agent-stat-value" id="a-capital">$500.00</div></div>
               <div class="agent-stat"><div class="agent-stat-label">POSITIONS</div><div class="agent-stat-value" id="a-pos">0 / 3</div></div>
             </div>
@@ -425,10 +425,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div class="bottombar">
     <div class="bb-item">KASS.AI <span>v2.1.0</span></div>
     <div class="bb-item">BACKEND: <span id="backendStatus">CHECKING...</span></div>
-    <div class="bb-item">SUPABASE: <span id="dbStatus">—</span></div>
+    <div class="bb-item">SUPABASE: <span id="dbStatus">--</span></div>
     <div class="bb-agent" id="agentStatusBar">AGENT: STOPPED</div>
     <div style="margin-left:auto">
-      <div class="bb-item">LAST UPDATE: <span id="lastUpdate">—</span></div>
+      <div class="bb-item">LAST UPDATE: <span id="lastUpdate">--</span></div>
     </div>
   </div>
 
@@ -630,11 +630,11 @@ async function loadMarkets() {
     polyBody.innerHTML = polyData.length
       ? polyData.map(m => `
         <tr>
-          <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.question || '—'}</td>
-          <td class="up">${m.yesPrice ? (m.yesPrice * 100).toFixed(1) + '%' : '—'}</td>
-          <td class="down">${m.noPrice ? (m.noPrice * 100).toFixed(1) + '%' : '—'}</td>
-          <td>$${m.volume ? (m.volume / 1000).toFixed(1) + 'K' : '—'}</td>
-          <td>$${m.liquidity ? (m.liquidity / 1000).toFixed(1) + 'K' : '—'}</td>
+          <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.question || '--'}</td>
+          <td class="up">${m.yesPrice ? (m.yesPrice * 100).toFixed(1) + '%' : '--'}</td>
+          <td class="down">${m.noPrice ? (m.noPrice * 100).toFixed(1) + '%' : '--'}</td>
+          <td>$${m.volume ? (m.volume / 1000).toFixed(1) + 'K' : '--'}</td>
+          <td>$${m.liquidity ? (m.liquidity / 1000).toFixed(1) + 'K' : '--'}</td>
         </tr>`).join('')
       : '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">No Polymarket data available</td></tr>';
 
@@ -645,10 +645,10 @@ async function loadMarkets() {
       ? stocksData.map(s => `
         <tr>
           <td style="color:var(--orange);font-weight:600">${s.symbol}</td>
-          <td class="up">$${s.askPrice ? s.askPrice.toFixed(2) : '—'}</td>
-          <td>$${s.bidPrice ? s.bidPrice.toFixed(2) : '—'}</td>
-          <td style="color:${s.rsi > 70 ? 'var(--red)' : s.rsi < 30 ? 'var(--green)' : 'var(--text)'}">${s.rsi ? s.rsi.toFixed(1) : '—'}</td>
-          <td><span class="badge ${s.trend === 'above_sma' ? 'buy' : 'sell'}">${s.trend || '—'}</span></td>
+          <td class="up">$${s.askPrice ? s.askPrice.toFixed(2) : '--'}</td>
+          <td>$${s.bidPrice ? s.bidPrice.toFixed(2) : '--'}</td>
+          <td style="color:${s.rsi > 70 ? 'var(--red)' : s.rsi < 30 ? 'var(--green)' : 'var(--text)'}">${s.rsi ? s.rsi.toFixed(1) : '--'}</td>
+          <td><span class="badge ${s.trend === 'above_sma' ? 'buy' : 'sell'}">${s.trend || '--'}</span></td>
         </tr>`).join('')
       : '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:20px">Alpaca API key required for stock data</td></tr>';
 
@@ -659,11 +659,11 @@ async function loadMarkets() {
       ? cryptoData.map(c => `
         <tr>
           <td style="color:var(--yellow);font-weight:600">${c.pair}</td>
-          <td>$${c.last ? c.last.toLocaleString() : '—'}</td>
-          <td class="up">$${c.high24h ? c.high24h.toLocaleString() : '—'}</td>
-          <td class="down">$${c.low24h ? c.low24h.toLocaleString() : '—'}</td>
-          <td>${c.volume24h ? c.volume24h.toFixed(1) : '—'}</td>
-          <td style="color:${c.rsi > 70 ? 'var(--red)' : c.rsi < 30 ? 'var(--green)' : 'var(--text)'}">${c.rsi || '—'}</td>
+          <td>$${c.last ? c.last.toLocaleString() : '--'}</td>
+          <td class="up">$${c.high24h ? c.high24h.toLocaleString() : '--'}</td>
+          <td class="down">$${c.low24h ? c.low24h.toLocaleString() : '--'}</td>
+          <td>${c.volume24h ? c.volume24h.toFixed(1) : '--'}</td>
+          <td style="color:${c.rsi > 70 ? 'var(--red)' : c.rsi < 30 ? 'var(--green)' : 'var(--text)'}">${c.rsi || '--'}</td>
         </tr>`).join('')
       : '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:20px">No crypto data available</td></tr>';
 
@@ -699,12 +699,12 @@ async function loadPositions() {
     tbody.innerHTML = all.length
       ? all.map(p => `
         <tr>
-          <td style="color:var(--text3);font-size:10px">${(p.id || '—').slice(0, 16)}</td>
-          <td>${p.source || p.market || '—'}</td>
-          <td style="color:var(--orange)">${p.symbol || p.pair || '—'}</td>
-          <td><span class="badge ${p.direction || p.side || p.type}">${p.direction || p.side || p.type || '—'}</span></td>
+          <td style="color:var(--text3);font-size:10px">${(p.id || '--').slice(0, 16)}</td>
+          <td>${p.source || p.market || '--'}</td>
+          <td style="color:var(--orange)">${p.symbol || p.pair || '--'}</td>
+          <td><span class="badge ${p.direction || p.side || p.type}">${p.direction || p.side || p.type || '--'}</span></td>
           <td>$${(p.size || p.marketValue || 0).toFixed(2)}</td>
-          <td style="color:var(--text3);font-size:10px">${p.openedAt ? new Date(p.openedAt).toTimeString().slice(0,8) : '—'}</td>
+          <td style="color:var(--text3);font-size:10px">${p.openedAt ? new Date(p.openedAt).toTimeString().slice(0,8) : '--'}</td>
           <td><span class="badge ${p.mode || 'paper'}">${(p.mode || 'paper').toUpperCase()}</span></td>
         </tr>`).join('')
       : '<tr><td colspan="7" style="color:var(--text3);text-align:center;padding:20px">No open positions</td></tr>';
@@ -737,7 +737,7 @@ async function loadSuggestions() {
     if (data.suggestions && data.suggestions.length) {
       container.innerHTML = data.suggestions.map(s => `
         <div style="background:var(--bg2);border:1px solid var(--border);padding:10px;">
-          <div style="color:var(--orange);font-size:10px;margin-bottom:4px">${s.created_at ? new Date(s.created_at).toLocaleString() : '—'}</div>
+          <div style="color:var(--orange);font-size:10px;margin-bottom:4px">${s.created_at ? new Date(s.created_at).toLocaleString() : '--'}</div>
           <div style="font-size:11px;line-height:1.6">${s.data || s.suggestion || JSON.stringify(s)}</div>
         </div>`).join('');
     }
