@@ -164,9 +164,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div class="topbar">
     <div class="logo">KASS<span>.AI</span></div>
     <div class="status-dot" id="agentDot"></div>
-    <div id="modeBadge" class="mode-badge paper" onclick="toggleMode()">📄 PAPER</div>
-    <button class="agent-btn btn-start" id="btnStart" onclick="startAgent()">▶ START AGENT</button>
-    <button class="agent-btn btn-stop" id="btnStop" onclick="stopAgent()" style="display:none">■ STOP</button>
+    <div id="modeBadge" class="mode-badge paper" onclick="toggleMode()">[P] PAPER</div>
+    <button class="agent-btn btn-start" id="btnStart" onclick="startAgent()">>> START AGENT</button>
+    <button class="agent-btn btn-stop" id="btnStop" onclick="stopAgent()" style="display:none">-- STOP</button>
     <div class="topbar-right">
       <div class="bb-item">CYCLE: <span id="cycleCount">0</span></div>
       <div class="bb-item">POSITIONS: <span id="posCount">0</span>/3</div>
@@ -291,7 +291,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         </div>
         <div class="panel-body">
           <div class="agent-panel">
-            <div class="agent-panel-title">⚡ AGENT STATUS</div>
+            <div class="agent-panel-title">~ AGENT STATUS</div>
             <div class="agent-grid">
               <div class="agent-stat"><div class="agent-stat-label">STATUS</div><div class="agent-stat-value" id="a-status">STOPPED</div></div>
               <div class="agent-stat"><div class="agent-stat-label">MODE</div><div class="agent-stat-value" id="a-mode">PAPER</div></div>
@@ -301,9 +301,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
               <div class="agent-stat"><div class="agent-stat-label">POSITIONS</div><div class="agent-stat-value" id="a-pos">0 / 3</div></div>
             </div>
             <div class="market-toggles">
-              <div class="market-toggle active poly" id="toggle-poly" onclick="toggleMarket('polymarket')">⬡ POLYMARKET</div>
-              <div class="market-toggle active stocks" id="toggle-stocks" onclick="toggleMarket('stocks')">📈 STOCKS</div>
-              <div class="market-toggle active crypto" id="toggle-crypto" onclick="toggleMarket('crypto')">₿ CRYPTO</div>
+              <div class="market-toggle active poly" id="toggle-poly" onclick="toggleMarket('polymarket')">[*] POLYMARKET</div>
+              <div class="market-toggle active stocks" id="toggle-stocks" onclick="toggleMarket('stocks')">[^] STOCKS</div>
+              <div class="market-toggle active crypto" id="toggle-crypto" onclick="toggleMarket('crypto')">[$] CRYPTO</div>
             </div>
           </div>
 
@@ -325,8 +325,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
           </div>
 
           <div style="display:flex;gap:10px;">
-            <button class="agent-btn btn-start" style="flex:1;padding:10px" onclick="startAgent()">▶ START AGENT (24/7)</button>
-            <button class="agent-btn btn-stop" style="flex:1;padding:10px" onclick="stopAgent()">■ STOP AGENT</button>
+            <button class="agent-btn btn-start" style="flex:1;padding:10px" onclick="startAgent()">>> START AGENT (24/7)</button>
+            <button class="agent-btn btn-stop" style="flex:1;padding:10px" onclick="stopAgent()">-- STOP AGENT</button>
           </div>
         </div>
       </div>
@@ -339,9 +339,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         </div>
         <div class="panel-body">
           <div class="tabs">
-            <div class="tab active" onclick="switchMarketTab('poly')" id="mtab-poly">⬡ POLYMARKET</div>
-            <div class="tab" onclick="switchMarketTab('stocks')" id="mtab-stocks">📈 STOCKS</div>
-            <div class="tab" onclick="switchMarketTab('crypto')" id="mtab-crypto">₿ CRYPTO</div>
+            <div class="tab active" onclick="switchMarketTab('poly')" id="mtab-poly">[*] POLYMARKET</div>
+            <div class="tab" onclick="switchMarketTab('stocks')" id="mtab-stocks">[^] STOCKS</div>
+            <div class="tab" onclick="switchMarketTab('crypto')" id="mtab-crypto">[$] CRYPTO</div>
           </div>
           <div id="market-poly" style="padding-top:10px">
             <table class="data-table">
@@ -495,7 +495,7 @@ async function toggleMode() {
 function updateModeUI() {
   const badge = document.getElementById('modeBadge');
   badge.className = 'mode-badge ' + state.mode;
-  badge.textContent = state.mode === 'paper' ? '📄 PAPER' : '🔴 LIVE';
+  badge.textContent = state.mode === 'paper' ? '[P] PAPER' : '[L] LIVE';
   document.getElementById('a-mode').textContent = state.mode.toUpperCase();
 }
 
